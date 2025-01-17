@@ -18,15 +18,18 @@ model User{
   name      String
   email     String   @unique
   password    String
+  zap     Zap[]
 }
 
 model Zap{
   id        String      @id @default(uuid())
   triggerId String
+  userId    Int
   trigger   Trigger? //A relation field, allowing each Zap to optionally be linked to a single Trigger ---- 
   // trigger relation establishes a connection to the Trigger model.
   actions   Action[]
   zapRuns   ZapRun[]  //since every zap will have multiple zap executions
+  user      User        @relation(fields: [userId], references: [id])
 }
 
 model Trigger{
@@ -35,6 +38,7 @@ model Trigger{
   triggerId String
   type AvailableTriggers @relation(fields: [triggerId], references: [id])
   zap Zap                @relation(fields: [zapId], references: [id])
+  metadata    Json  @default("{}")
 }
 
 model Action{
@@ -43,6 +47,8 @@ model Action{
   actionId String
   type AvailableActions @relation(fields: [actionId], references: [id])
   zap Zap                @relation(fields: [zapId], references: [id])
+  sortingOrder Int @default(0)
+  metadata Json
 }
 
 model AvailableActions{

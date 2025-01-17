@@ -21,22 +21,43 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
     const userId = req.params.userId;
     const zapId = req.params.zapId;
     const body = req.body;
-    yield client.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        const run = yield tx.zapRun.create({
-            data: {
-                zapId: zapId,
-                metadata: body
-            }
+    try {
+        const response = yield client.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            const run = yield tx.zapRun.create({
+                data: {
+                    zapId: zapId,
+                    metadata: body
+                }
+            });
+            yield tx.zapRunOutbox.create({
+                data: {
+                    zapRunId: run.id
+                }
+            });
+            return {
+                zapRun: run
+            };
+        }));
+        res.json({
+            message: "Transaction successful",
+            data: response,
         });
-        yield tx.zapRunOutbox.create({
-            data: {
-                zapRunId: run.id
-            }
-        });
-    }));
-    res.json({
-        message: "webhook received"
-    });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error("Error processing transaction:", error.message);
+            res.status(500).json({
+                message: "Transaction failed",
+                error: error.message,
+            });
+        }
+        else {
+            console.error("Unknown error:", error);
+            res.status(500).json({
+                message: "Transaction failed due to an unknown error.",
+            });
+        }
+    }
 }));
 app.listen(3000, () => {
     console.log("Server is running on http://localhost:3000");

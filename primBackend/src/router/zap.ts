@@ -5,6 +5,8 @@ import { prismaClient } from "../db";
 const router = Router();
 
 router.post("/",authMiddleware,async(req,res)=>{
+        //@ts-ignore
+        const id = req.id;
         const body = req.body;
         const parsedData = zapCreateSchema.safeParse(body);
         if(!parsedData.success){
@@ -13,11 +15,13 @@ router.post("/",authMiddleware,async(req,res)=>{
             return;
         }
 
-        await prismaClient.$transaction( async tx => {
+        const zapId = await prismaClient.$transaction( async tx => {
             const zap = await prismaClient.zap.create({
                 data:{
+                    userId:parseInt(id),
                     triggerId:"",
                     actions:{
+                        //@ts-ignore
                         create:parsedData.data.actions.map((x,index)=>(
                             {
                                 actionId:x.availableActionId,
@@ -41,17 +45,63 @@ router.post("/",authMiddleware,async(req,res)=>{
                     triggerId:trigger.id
                 }
             })
-            res.status(201).json({ message: "Zap created successfully" });
+            return zap.id
+        })
+        res.json({
+            zapId
         })
     })
 
 
-router.get("/",authMiddleware,(req,res)=>{
+router.get("/",authMiddleware,async(req,res)=>{
+    //@ts-ignore
+    const id = req.id;
+    const zap = await prismaClient.zap.findFirst({
+        where:{
+            userId:id
+        },
+        include:{
+            actions:{
+                include:{
+                    type:true
+                }
+            },
+            trigger:{
+                include:{
+                    type:true
+                }
+            }
+        }
+    })
     console.log("zap created")
+    res.json({ zap });
 })
 
-router.get("/:zapId",authMiddleware,(req,res)=>{
+router.get("/:zapId",authMiddleware,async(req,res)=>{
     console.log("get a zap")
+    //@ts-ignore
+    const id = req.id;
+    const zapId = req.params.zapId;
+    const zaps = await prismaClient.zap.findMany({
+        where:{
+            id:zapId,
+            userId:id
+        },
+        include:{
+            actions:{
+                include:{
+                    type:true
+                }
+            },
+            trigger:{
+                include:{
+                    type:true
+                }
+            }
+        }
+    })
+    console.log("zap created")
+    res.json({ zaps });
 })
 
 export const zapRouter = router;

@@ -11,6 +11,12 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        amber:{
+          700:"#ff4f00"
+        },
+        slate:{
+          100:"#ebe9df"
+        }
       },
     },
   },

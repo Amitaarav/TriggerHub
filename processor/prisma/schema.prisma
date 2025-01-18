@@ -18,7 +18,7 @@ model User{
   name      String
   email     String   @unique
   password    String
-  zap     Zap[]
+  zaps        Zap[]
 }
 
 model Zap{
@@ -29,7 +29,7 @@ model Zap{
   // trigger relation establishes a connection to the Trigger model.
   actions   Action[]
   zapRuns   ZapRun[]  //since every zap will have multiple zap executions
-  user      User        @relation(fields: [userId], references: [id])
+  user      User @relation(fields: [userId], references: [id])
 }
 
 model Trigger{

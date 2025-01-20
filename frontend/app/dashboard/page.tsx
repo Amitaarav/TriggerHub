@@ -2,25 +2,31 @@
 import {Appbar} from "@/components/Appbar"
 import { DarkButton } from "@/components/buttons/DarkButton"
 import { useState } from "react"
-import { BACKEND_URL } from "../config"
+import { BACKEND_URL,HOOKS_URL } from "../config"
 import axios from "axios"
 import { useEffect} from "react"
+import { useRouter } from "next/navigation"
+import { LinkButton } from "@/components/buttons/LinkButton"
+
+
 const Dashboard = () =>{
+    const router = useRouter()
     const { loading , zaps} = useZaps()
     return <div>
         <Appbar/>
         <div className="flex justify-center pt-8">
             <div className=" max-w-2xl w-full">
                 <div className="flex justify-between pr-8">
-                    <div className="font-semibold text-gray-700 text-xl">
+                    <div className="font-bold text-gray-00 text-xl">
                         My Zaps
                     </div>
                     <DarkButton onClick={()=>{
-                    }}>+ Create</DarkButton>
+                        router.push("/zap/create")
+                    }}>  Create</DarkButton>
                 </div>
             </div>
         </div>
-        {loading?"loading...":<ZapTable/>}
+        {loading ? <div>Loading...</div> : <div className="flex flex-row justify-center pl-20"> <ZapTable zaps={zaps}/> </div> }
     </div>
 }
 export default Dashboard
@@ -29,7 +35,7 @@ interface Zap{
     "id":string,
     "triggerId":string,
     "userId":number,
-    "actios":{
+    "actions":{
         "id":string,
         "zapId":string,
         "actionId":string,
@@ -37,6 +43,17 @@ interface Zap{
         "type":{
             "id":string,
             "name":string,
+            "image":string
+        }
+    }[],
+    "trigger":{
+        "id":string,
+        "zapId":string,
+        "triggerId":string,
+        "type":{
+            "id":string,
+            "name":string,
+            "image":string
         }
     }
 }
@@ -57,71 +74,22 @@ function useZaps(){
 }
 
 function ZapTable({zaps}:{zaps:Zap[]}){
-    return <div className="pt-6 flex justify-center">
-        <div className=" relative overflow-x-auto rounded-md">
-            <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-amber-700">
-                    <tr>
-                        <th scope="col" className="px-6 py-3">
-                            Product name
-                        </th>
-                        <th scope="col" className="px-6 py-3">
-                            Color
-                        </th>
-                        <th scope="col" className="px-6 py-3">
-                            Category
-                        </th>
-                        <th scope="col" className="px-6 py-3">
-                            Price
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr className="bg-white border-b dark:bg-gray-600 dark:border-gray-700">
-                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            Apple MacBook Pro 17"
-                        </th>
-                        <td className="px-6 py-4">
-                            Silver
-                        </td>
-                        <td className="px-6 py-4">
-                            Laptop
-                        </td>
-                        <td className="px-6 py-4">
-                            $2999
-                        </td>
-                    </tr>
-                    <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            Microsoft Surface Pro
-                        </th>
-                        <td className="px-6 py-4">
-                            White
-                        </td>
-                        <td className="px-6 py-4">
-                            Laptop PC
-                        </td>
-                        <td className="px-6 py-4">
-                            $1999
-                        </td>
-                    </tr>
-                    <tr className="bg-white dark:bg-gray-800">
-                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            Magic Mouse 2
-                        </th>
-                        <td className="px-6 py-4">
-                            Black
-                        </td>
-                        <td className="px-6 py-4">
-                            Accessories
-                        </td>
-                        <td className="px-6 py-4">
-                            $99
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
+    const router = useRouter()
+    return <div className="p-8 max-w-screen-lg w-full">
+    <div className="flex">
+            <div className="flex-1">Name</div>
+            <div className="flex-1">ID</div>
+            <div className="flex-1">Created at</div>
+            <div className="flex-1">Go</div>
     </div>
+    {zaps.map(z => <div className="flex border-b border-t py-4">
+        <div className="flex-1 flex"><img src={z.trigger.type.image} alt="" className="w-[30px] h-[30px]"/> {z.actions.map( x => <img src={x.type.image} alt="" className="w-[30px] h-[30px]"/> + "")}</div>
+        <div className="flex-1">{z.id}</div>
+        <div className="flex-1">Nov 13, 2023</div>
+        <div className="flex-1">{`${HOOKS_URL}/hooks/catch/1/${z.id}`}</div>
+        <div className="flex-1"><LinkButton onClick={() => {
+                router.push("/zap/" + z.id)
+            }}>Go</LinkButton></div>
+    </div>)}
+</div>
 }

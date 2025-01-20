@@ -43,7 +43,7 @@ export default function(){
                                 password:password
                             })
                             localStorage.setItem("token",res.data.token)
-                            // router.push("/dashboard")
+                            router.push("/dashboard")
                         }} size="big">Login</PrimaryButton>
                     </div>
                 </div>

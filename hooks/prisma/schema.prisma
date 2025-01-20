@@ -55,11 +55,13 @@ model AvailableActions{
   id   String @id @default(uuid())
   name String
   actions Action[]
+  image  String
 }
 model AvailableTriggers{
   id String @id @default(uuid())
   name String
   triggers Trigger[]
+  image String
 }
 
 model ZapRun{

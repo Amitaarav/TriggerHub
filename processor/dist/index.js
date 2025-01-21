@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const kafkajs_1 = require("kafkajs");
 const client = new client_1.PrismaClient();
-const TOPIC_NAME = "zap-events";
+const TOPIC_NAME = "zap-events-2";
 const kafka = new kafkajs_1.Kafka({
     clientId: 'outbox-processor',
     brokers: ['localhost:9092'] // update with your Kafka broker address

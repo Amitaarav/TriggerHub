@@ -1,6 +1,7 @@
 import express from "express"
 import { PrismaClient } from "@prisma/client"
 import { Kafka } from "kafkajs"
+
 const client = new PrismaClient();
 
 const TOPIC_NAME = "zap-events"

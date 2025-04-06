@@ -23,7 +23,7 @@ export default function() {
     const [selectedModalIndex,setSelecedModalIndex] = useState<number | null>(null)
     return <div>
         <Appbar />
-        <div className="flex justify-end">
+        <div className="flex justify-end p-2">
             <PrimaryButton onClick={
                 async() => {
                     if(!selectedTrigger?.id) {
@@ -43,20 +43,19 @@ export default function() {
                         }
                     }
                 )
-
                 router.push("/dashboard")
                 }
             }>Publish</PrimaryButton>
         </div>
         <div className="w-full min-h-screen bg-slate-200 flex flex-col justify-center pt-[-40px]">
-    
+            
             <div className="flex justify-center w-full">
                 <ZapCell onClick={()=>{
                     setSelecedModalIndex(1)
                 }} index={1}  name={selectedTrigger?.name? selectedTrigger.name : "Select a trigger"}  />
             </div>
             <div className="w-full pt-2 pb-2">
-                {selectedAction.map((action, index) => <div className="pt-2 flex justify-center">
+                {selectedAction.map((action, index) => <div className="p-2 flex justify-center">
                     <ZapCell onClick={()=>{
                     setSelecedModalIndex(action.index)
                 }} index={action.index}  name={ action.availableActionName ? action.availableActionName : "Select an Action"}  />

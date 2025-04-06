@@ -20,7 +20,7 @@ The platform supports:
 - **Fault Tolerance:** Ensures reliable event processing with Kafka consumer groups and retries.
 
 ## 🛠️ Tech Stack
-- **Frontend:** Next.js, React, TypeScript, TailwindCSS, Axios
+- **Frontend:** Next.js, React, TypeScript, TailwindCSS, Axios, React-flow
 - **Backend:** Node.js, Express, Prisma, PostgreSQL
 - **Event Streaming:** Kafka
 - **Database:** PostgreSQL with Prisma ORM
@@ -114,13 +114,11 @@ TriggerHub/
 └── worker/            # Kafka Event Worker
 ```
 
-## 🤝 Contributing
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature/your-feature`
-3. Make your changes.
-4. Commit changes: `git commit -m 'Add new feature'`
-5. Push to the branch: `git push origin feature/your-feature`
-6. Open a Pull Request.
+## Processor
+-Processor pushes data to kafka topic named "zap-events" with key "zap" and value as the event data. 
+
+## Worker
+-Worker pulls and listens to the "zap-events" topic and processes the events.
 
 
 ---

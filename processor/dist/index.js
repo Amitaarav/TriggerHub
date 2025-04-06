@@ -12,10 +12,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const kafkajs_1 = require("kafkajs");
 const client = new client_1.PrismaClient();
-const TOPIC_NAME = "zap-events-2";
+const TOPIC_NAME = "zap-events";
 const kafka = new kafkajs_1.Kafka({
     clientId: 'outbox-processor',
-    brokers: ['localhost:9092'] // update with your Kafka broker address
+    brokers: ['localhost:9092'] // yet to update with your Kafka broker address
 });
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -28,9 +28,11 @@ function main() {
             });
             producer.send({
                 topic: TOPIC_NAME,
-                messages: pendingRows.map((r) => ({
-                    value: r.zapRunId
-                }))
+                messages: pendingRows.map((r) => {
+                    return {
+                        value: JSON.stringify({ zapRunId: r.zapRunId, stage: 0 })
+                    };
+                })
             });
             yield client.zapRunOutbox.deleteMany({
                 where: {

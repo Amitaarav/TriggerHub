@@ -54,7 +54,7 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
                 triggerId: trigger.id
             }
         });
-        return zap.id;
+        res.json(zap.id);
     }));
     res.json({
         zapId

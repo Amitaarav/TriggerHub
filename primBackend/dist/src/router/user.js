@@ -29,12 +29,11 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     const userExists = yield db_1.prismaClient.user.findFirst({
         where: {
-            email: parsedData.data.username
+            email: parsedData.data.username,
         }
     });
     if (userExists) {
         res.status(403).json({ error: "User already exists" });
-        return;
     }
     yield db_1.prismaClient.user.create({
         data: {

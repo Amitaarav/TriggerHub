@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { PrimaryButton } from "./buttons/PrimaryButton";
 import { SecondaryButton } from "./buttons/SecondaryButton";
 import { Feature } from "./Feature";
+import { KnowTrigger}from "./KnowTrigger";
 export const Hero = () => {
     const router = useRouter()
     return(<div>
@@ -31,6 +32,9 @@ export const Hero = () => {
                 <Feature title={"Free Forever"} subtitle={"for core features"}/>
                 <Feature title={"More apps"} subtitle={"than any other platforms"}/>
                 <Feature title={"Cutting Edge"} subtitle={ " AI Features"}/>
+            </div>
+            <div>
+                <KnowTrigger></KnowTrigger>
             </div>
             
     </div>

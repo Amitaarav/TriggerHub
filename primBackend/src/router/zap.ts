@@ -47,7 +47,9 @@ router.post("/",authMiddleware,async(req,res)=>{
                     triggerId:trigger.id
                 }
             })
-            return zap.id
+            res.json (
+                zap.id
+            )
         })
         res.json({
             zapId

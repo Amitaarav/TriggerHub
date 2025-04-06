@@ -159,9 +159,12 @@ function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props:
                                                 })
                                             }
                                             
-                                            }} className="flex border p-2 cursor-pointer hover:bg-gray-100">
+                                            }} className="flex border p-2 cursor-pointer hover:bg-gray-100 pb-3">
+                                                
                                                 <img className="rounded-full" src={image}  width={30} />
                                                 <div className="pr-2 font-semibold flex flex-col justify-center">{name}</div>
+                                            
+                                                
                                         </div>
                                 })
                         }
@@ -207,12 +210,14 @@ function EmailSelector({setMetadata}:{
     return <div>
         <Input label={"To"} type={"text"} placeholder="To" onChange={(event => setEmail(event.target.value))}></Input>
         <Input label={"Body"} type={"text"} placeholder="Body" onChange={(event => setBody(event.target.value))}></Input>
+        <div className="p-4">
         <PrimaryButton onClick={()=>{
             setMetadata({
                 email,
                 body
             })
         }}>Submit</PrimaryButton>
+        </div>
     </div>
 }
 
@@ -224,8 +229,7 @@ function SolanaSelector({setMetadata}:{
     return <div className="gap-4">
         <Input label={"To"} type={"text"} placeholder="To" onChange={(event => setAddress(event.target.value))}></Input>
         <Input label={"Amount"} type={"text"} placeholder="Body" onChange={(event => setAmount(event.target.value))}></Input>
-        <div className="p-8"></div>
-        <div className="m-8">
+        <div className="p-4">
         <PrimaryButton  onClick={()=>{
             setMetadata({
                 amount,

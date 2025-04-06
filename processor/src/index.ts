@@ -1,12 +1,13 @@
 import express from "express"
 import { PrismaClient } from "@prisma/client"
 import { Kafka } from "kafkajs"
-const client = new PrismaClient()
+const client = new PrismaClient();
 
-const TOPIC_NAME = "zap-events-2"
+const TOPIC_NAME = "zap-events"
+
 const kafka = new Kafka({
     clientId: 'outbox-processor',
-    brokers: ['localhost:9092'] // update with your Kafka broker address
+    brokers: ['localhost:9092'] // yet to update with your Kafka broker address
 })
 async function main(){
     const producer = kafka.producer()
@@ -19,11 +20,12 @@ async function main(){
         })
         producer.send({
             topic: TOPIC_NAME,
-            messages:pendingRows.map((r)=>({
-                value: r.zapRunId
-            }))
+            messages:pendingRows.map((r)=>
+            {
+            return {
+                value: JSON.stringify({zapRunId:r.zapRunId,stage:0})
+            }})
         })
-
         await client.zapRunOutbox.deleteMany({
             where:{
                 id:{

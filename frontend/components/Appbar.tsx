@@ -5,7 +5,7 @@ import { PrimaryButton } from "./buttons/PrimaryButton";
 export const Appbar = () => {
     const router = useRouter();
     return <div className="flex border-b justify-between p-4">
-        <div className="font-extrabold text-2xl flex flex-col justify-center">
+        <div className="font-extrabold text-3xl flex flex-col justify-center">
             TriggerHub
         </div>
         <div className="flex gap-4 font-medium">

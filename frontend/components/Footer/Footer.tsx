@@ -1,6 +1,4 @@
     "use client";
-
-    import { FooterData } from "./FooterData";
     import { FooterSection } from "@/types/footerSection";
     import { motion } from "framer-motion";
 

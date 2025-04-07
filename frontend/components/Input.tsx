@@ -3,6 +3,7 @@
 export const Input = ({label, placeholder, onChange, type = "text"}: {
     label: string;
     placeholder: string;
+    //@ts-ignore
     onChange: (e: any) => void;
     type?: "text" | "password"
 }) => {

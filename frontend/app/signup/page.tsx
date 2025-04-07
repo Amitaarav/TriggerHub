@@ -47,6 +47,7 @@ export default function(){
                                 password:password,
                                 name:name
                             })
+                            console.log(res);
                             router.push("/login")
                         }} size="big">Get started free</PrimaryButton>
                     </div>

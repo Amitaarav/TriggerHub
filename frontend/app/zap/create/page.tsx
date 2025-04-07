@@ -6,8 +6,9 @@ import { PrimaryButton } from "@/components/buttons/PrimaryButton"
 import { BACKEND_URL } from "@/app/config"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/Input"
+import Image from "next/image"
 import axios from "axios"
-export default function() {
+export default function zapCreate() {
     const router = useRouter()
     const { availableActions, availableTriggers } = useAvailableActionsAndTriggers()
     const [selectedTrigger, setSelectedTrigger] = useState<{
@@ -18,7 +19,7 @@ export default function() {
         index:number;
         availableActionId:string;
         availableActionName:string;
-        metadata:any
+        metadata:string;
     }[]>([])
     const [selectedModalIndex,setSelecedModalIndex] = useState<number | null>(null)
     return <div>
@@ -43,6 +44,7 @@ export default function() {
                         }
                     }
                 )
+                console.log(response.data)
                 router.push("/dashboard")
                 }
             }>Publish</PrimaryButton>
@@ -55,7 +57,7 @@ export default function() {
                 }} index={1}  name={selectedTrigger?.name? selectedTrigger.name : "Select a trigger"}  />
             </div>
             <div className="w-full pt-2 pb-2">
-                {selectedAction.map((action, index) => <div className="p-2 flex justify-center">
+                {selectedAction.map((action, index) => <div key={index} className="p-2 flex justify-center">
                     <ZapCell onClick={()=>{
                     setSelecedModalIndex(action.index)
                 }} index={action.index}  name={ action.availableActionName ? action.availableActionName : "Select an Action"}  />
@@ -65,13 +67,13 @@ export default function() {
             <div className="flex justify-center">
                     <div className="">
                         <PrimaryButton onClick={()=>{
-                        setSelectedAction( actions => [...actions, {index: actions.length + 2,availableActionId: "", availableActionName: "",metadata:{}}])
+                        setSelectedAction( actions => [...actions, {index: actions.length + 2,availableActionId: "", availableActionName: "",metadata: ""}])
                         }}><div className="text-2xl max-w-2 flex justify-center">+</div></PrimaryButton>
                     </div>
             </div>
         </div>
         {selectedModalIndex && <Modal availableItems={ selectedModalIndex === 1 ?availableTriggers : availableActions} onSelect={(
-            props: null | {name:string, id: string,metadata: any;}) =>{
+            props: null | {name:string, id: string,metadata: string;}) =>{
                 if(props === null){
                     setSelecedModalIndex(null)
                     return ;
@@ -83,7 +85,8 @@ export default function() {
                     })
                 }else{
                     setSelectedAction( action => {
-                        let newActions = [...action];
+                        // let --> const
+                        const newActions = [...action];
                         newActions[selectedModalIndex - 2] = {
                             index: selectedModalIndex,
                             availableActionId: props.id,
@@ -99,7 +102,7 @@ export default function() {
     </div>
 }
 
-function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props: null | {name:string, id: string,metadata:any;}) => void,availableItems: {name: string, id: string,image:string;}[]}) {
+function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props: null | {name:string, id: string,metadata:string;}) => void,availableItems: {name: string, id: string,image:string;}[]}) {
     const [step,setStep] = useState(0);
     const [selectedAction,setSelectedAction] = useState<{
         id:string,
@@ -142,12 +145,12 @@ function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props:
             {( step === 0 && <div>
                         {
                             availableItems.map(({id,name,image})=>{
-                                return <div onClick={()=>{
+                                return <div key={id} onClick={()=>{
                                             if(isTrigger){
                                                 onSelect({
                                                     id,
                                                     name,
-                                                    metadata: {}
+                                                    metadata:""
                                                 })
                                             }
                                             else{
@@ -160,7 +163,7 @@ function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props:
                                             
                                             }} className="flex border p-2 cursor-pointer hover:bg-gray-100 pb-3">
                                                 
-                                                <img className="rounded-full" src={image}  width={30} />
+                                                <Image alt="" className="rounded-full" src={image}  width={30} height={30} />
                                                 <div className="pr-2 font-semibold flex flex-col justify-center">{name}</div>
                                             
                                                 

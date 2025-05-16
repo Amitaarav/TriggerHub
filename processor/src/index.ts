@@ -10,6 +10,7 @@ const kafka = new Kafka({
     clientId: 'outbox-processor',
     brokers: ['localhost:9092'] // yet to update with your Kafka broker address
 })
+
 async function main(){
     const producer = kafka.producer()
     await producer.connect()

@@ -1,8 +1,9 @@
-    import { OrbitControls } from "@react-three/drei";
-    import { motion } from "framer-motion";
-    import { PopularUseCases} from "./PopularUseCases"
-    import { Canvas, useFrame } from "@react-three/fiber";
-    import { Suspense, useRef } from "react";
+"use client"
+import { OrbitControls } from "@react-three/drei";
+import { Suspense, useRef } from "react";
+import { motion } from "framer-motion";
+import { PopularUseCases} from "./PopularUseCases"
+import { Canvas, useFrame } from "@react-three/fiber";
 
     const AnimatedTorus = () => {
         const meshRef = useRef<any>(null);
@@ -35,9 +36,9 @@ export default function AnimatedCanvas() {
             );
     }
 
-    export function KnowTrigger() {
+export function KnowTrigger() {
     return (
-        <div className="min-h-screen bg-white text-gray-900">
+        <div className="min-h-screen bg-white text-gray-900 m-4">
         <section className="grid md:grid-cols-2 gap-8 p-10 items-center">
             <div>
             <motion.h1

@@ -85,7 +85,6 @@ export default function zapCreate() {
                     })
                 }else{
                     setSelectedAction( action => {
-                        // let --> const
                         const newActions = [...action];
                         newActions[selectedModalIndex - 2] = {
                             index: selectedModalIndex,
@@ -108,7 +107,7 @@ function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props:
         id:string,
         name:string
     }>();
-    const isTrigger = index === 1
+    const isTrigger = index === 1;
 
     return <div>
         <div  className="  fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-slate-100 bg-opacity-70 flex ">

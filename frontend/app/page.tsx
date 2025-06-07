@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer/Footer";
 import { FooterData } from "@/components/Footer/FooterData";
 export default function Home() {
   return (
-    <main className="pb-20">
+    <main className="">
       <Appbar />
       <Hero />
       <HeroVideo />

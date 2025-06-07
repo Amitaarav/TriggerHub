@@ -33,7 +33,7 @@ export const Hero = () => {
                 <Feature title={"More apps"} subtitle={"than any other platforms"}/>
                 <Feature title={"Cutting Edge"} subtitle={ " AI Features"}/>
             </div>
-            <div>
+            <div className="m-20">
                 <KnowTrigger></KnowTrigger>
             </div>
             

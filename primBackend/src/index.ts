@@ -16,9 +16,9 @@ app.use("/api/v1/trigger", triggerRouter);
 
 app.use("/api/v1/action", actionRouter);
 
-app.get('/', (req, res) => {
+// app.get('/', (req, res) => {
     
-})
+// })
 
 app.listen(3000, () => {
     console.log('Server is running on port 3000')

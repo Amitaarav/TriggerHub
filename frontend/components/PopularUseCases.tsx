@@ -10,10 +10,10 @@ const useCases = [
 
 export function PopularUseCases() {
     return (
-        <section className="p-10 bg-orange-500 ">
+        <section className="p-10 bg-orange-500 rounded-xl ">
         <h2 className="text-3xl font-bold text-center mb-10 text-white">Popular Use Cases</h2>
 
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 shadow-lg">
             {useCases.map((useCase, index) => (
             <motion.div
                 key={index}

@@ -12,15 +12,18 @@ export const Appbar = () => {
 
     useEffect(() => {
         const token = localStorage.getItem("token")
-        setLoggedIn(!!token)
+        setLoggedIn(!token)
     },[])
 
+    const handleLogin = () => {
+        const token = localStorage.getItem("token")
+    }
     const handleLogout = () => {
         localStorage.removeItem("token")
         setLoggedIn(false)
         router.push("/")
     }
-    return <div className="flex border-b justify-between p-4">
+    return <div className="flex border-b justify-between p-4 bg-gray-100">
         <div className="font-extrabold text-3xl flex flex-col justify-center cursor-pointer"
         onClick={() => {
             router.push("/")
@@ -42,11 +45,9 @@ export const Appbar = () => {
                         <LinkButton onClick={() => {
                             router.push("/login")
                         }} >Login</LinkButton>
-                        <PrimaryButton onClick={()=>{
-                            router.push("/signup")
-                        }}>Signup</PrimaryButton>
                     </div>
                 )
+                
             }
             
         </div>

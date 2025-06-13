@@ -16,27 +16,29 @@ const types_1 = require("../types");
 const db_1 = require("../db");
 const router = (0, express_1.Router)();
 router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //@ts-ignore
     const id = req.id;
     const body = req.body;
     const parsedData = types_1.zapCreateSchema.safeParse(body);
     if (!parsedData.success) {
-        console.log("error");
-        res.status(400).send("error");
+        console.log("Validation Error: ", parsedData.error.message);
+        res.status(400).send("Validation Error: " + parsedData.error.message);
         return;
     }
     const zapId = yield db_1.prismaClient.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        const zap = yield db_1.prismaClient.zap.create({
+        var _a;
+        const zap = yield tx.zap.create({
             data: {
-                userId: parseInt(id),
+                userId: Number(id),
                 triggerId: "",
                 actions: {
-                    //@ts-ignore
-                    create: parsedData.data.actions.map((x, index) => ({
-                        actionId: x.availableActionId,
-                        sortingOrder: index,
-                        metadata: x.actionMetadata
-                    }))
+                    create: parsedData.data.actions.map((x, index) => {
+                        var _a;
+                        return ({
+                            actionId: x.availableActionId,
+                            sortingOrder: index,
+                            metadata: (_a = x.actionMetadata) !== null && _a !== void 0 ? _a : {}
+                        });
+                    })
                 }
             }
         });
@@ -44,6 +46,7 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
             data: {
                 triggerId: parsedData.data.availableTriggerId,
                 zapId: zap.id,
+                metadata: (_a = parsedData.data.triggerMetadata) !== null && _a !== void 0 ? _a : {}
             }
         });
         yield db_1.prismaClient.zap.update({
@@ -54,18 +57,17 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
                 triggerId: trigger.id
             }
         });
-        res.json(zap.id);
+        return zap.id;
     }));
     res.json({
         zapId
     });
 }));
 router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //@ts-ignore
     const id = req.id;
     const zap = yield db_1.prismaClient.zap.findFirst({
         where: {
-            userId: id
+            userId: Number(id)
         },
         include: {
             actions: {
@@ -84,14 +86,12 @@ router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, voi
     res.json({ zap });
 }));
 router.get("/:zapId", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("get a zap");
-    //@ts-ignore
     const id = req.id;
     const zapId = req.params.zapId;
     const zaps = yield db_1.prismaClient.zap.findMany({
         where: {
             id: zapId,
-            userId: id
+            userId: Number(id)
         },
         include: {
             actions: {

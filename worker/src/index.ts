@@ -1,7 +1,10 @@
 
 import { Kafka } from 'kafkajs';
 import  { PrismaClient } from '@prisma/client';
-
+import { JsonObject } from '@prisma/client/runtime/library';
+import { parse } from './parser';
+import { sendEmail } from './email';
+import { sendSolana } from './solana';
 const TOPIC_NAME = "zap-events"
 
 const kafka = new Kafka({
@@ -9,7 +12,7 @@ const kafka = new Kafka({
     brokers: ['localhost:9092']
 });
 
-const prisma = new PrismaClient();
+const prismaClient = new PrismaClient();
 
 async function main(){
 
@@ -18,6 +21,7 @@ async function main(){
 
     await consumer.subscribe({topic: TOPIC_NAME, fromBeginning: true});
 
+    // create a producer to send the next stage
     const producer = kafka.producer();
     await producer.connect();
 
@@ -38,7 +42,7 @@ async function main(){
             const zapRunId = parsedValue.zapRunId;
             const stage = parsedValue.stage;
 
-            const zapRunDetails = await prisma.zapRun.findFirst({
+            const zapRunDetails = await prismaClient.zapRun.findFirst({
                 where:{
                     id: zapRunId
                 },
@@ -55,7 +59,9 @@ async function main(){
                 }
             })
 
-            const currentAction = zapRunDetails?.zap.actions.find((action : any) => action.sortingOrder === stage);
+            // execute the action
+
+            const currentAction = zapRunDetails?.zap.actions.find((action) => action.sortingOrder === stage);
 
             if(!currentAction){
                 console.log("current action is not found");
@@ -64,13 +70,22 @@ async function main(){
 
             if(currentAction.type.id === "email"){
                 console.log("email action")
+                const body = parse((currentAction.metadata as JsonObject)?.body as string, zapRunDetails?.metadata, "{", "}"); // You have received {comment.amount}
+                const to = parse((currentAction.metadata as JsonObject)?.email as string, zapRunDetails?.metadata, "{", "}"); // {comment.email}
+
+                console.log(`Sending out email to ${to} with body ${body}`)
+                await sendEmail(to, body);
+                
             }
             if(currentAction.type.id === "send-solana"){
-                console.log("send solana action")
+                const amount = parse((currentAction.metadata as JsonObject)?.amount as string, zapRunDetails?.metadata, "{", "}"); // {comment.amount}
+                const to = parse((currentAction.metadata as JsonObject)?.email as string, zapRunDetails?.metadata, "{", "}"); // {comment.email}
+                console.log(`Sending out solana to ${to} with amount ${amount}`)
+                await sendSolana(to, amount);
             }
             await new Promise(resolve => setTimeout(resolve, 5000))
 
-            const lastStage = (zapRunDetails?.zap.actions?.length ||1) - 1;
+            const lastStage = (zapRunDetails?.zap.actions?.length || 1) - 1;
 
             if(lastStage !== stage){
                 await producer.send({

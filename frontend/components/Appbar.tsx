@@ -7,22 +7,24 @@ import { div } from "framer-motion/client";
 export const Appbar = () => {
     const [isLoggedIn, setLoggedIn] = useState(false)
 
-
     const router = useRouter();
 
     useEffect(() => {
         const token = localStorage.getItem("token")
-        setLoggedIn(!token)
-    },[])
+        setLoggedIn(!!token)  // Set to true if token exists, false if null
+    }, [])
 
     const handleLogin = () => {
         const token = localStorage.getItem("token")
+        setLoggedIn(!!token)
     }
+
     const handleLogout = () => {
         localStorage.removeItem("token")
         setLoggedIn(false)
         router.push("/")
     }
+
     return <div className="flex border-b justify-between p-4 bg-gray-100">
         <div className="font-extrabold text-3xl flex flex-col justify-center cursor-pointer"
         onClick={() => {

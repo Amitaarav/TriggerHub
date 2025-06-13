@@ -13,9 +13,9 @@ exports.SigninSchema = zod_1.z.object({
 });
 exports.zapCreateSchema = zod_1.z.object({
     availableTriggerId: zod_1.z.string(),
-    triggerMetadata: zod_1.z.any().optional(),
+    triggerMetadata: zod_1.z.any().default({}),
     actions: zod_1.z.array(zod_1.z.object({
         availableActionId: zod_1.z.string(),
-        actionMetadata: zod_1.z.any().optional()
+        actionMetadata: zod_1.z.any().default({})
     }))
 });

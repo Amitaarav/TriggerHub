@@ -3,6 +3,7 @@ import { zapRouter } from './router/zap';
 import { userRouter } from './router/user';
 import { triggerRouter } from './router/trigger';
 import { actionRouter } from './router/action';
+import { authMiddleware } from './middleware';
 import cors from 'cors'
 const app = express()
 

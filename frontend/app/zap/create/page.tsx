@@ -30,22 +30,34 @@ export default function zapCreate() {
                     if(!selectedTrigger?.id) {
                         return;
                     }
-                    const response = await axios.post(`${BACKEND_URL}/api/v1/zap`,{
-                        "availableTriggerId":selectedTrigger.id,
-                        "triggerMetadata":{},
-                        "actions":selectedAction.map((action) => ({
-                            availableActionId:action.availableActionId,
-                            actionMetadata: action.metadata
-                        }))
-                    },
-                    {
-                        headers:{
-                            Authorization:localStorage.getItem("token") || ""
+                    const token = localStorage.getItem("token");
+                    if (!token) {
+                        console.error("No token found");
+                        return;
+                    }
+                    console.log("Sending request with token:", token);
+                    try {
+                        const response = await axios.post(`${BACKEND_URL}/api/v1/zap`,{
+                            "availableTriggerId":selectedTrigger.id,
+                            "triggerMetadata":{},
+                            "actions":selectedAction.map((action) => ({
+                                availableActionId:action.availableActionId,
+                                actionMetadata: action.metadata || {}
+                            }))
+                        },
+                        {
+                            headers:{
+                                Authorization: `Bearer ${token}`
+                            }
+                        });
+                        console.log("Response:", response.data);
+                        router.push("/dashboard");
+                    } catch (error: any) {
+                        console.error("Error creating zap:", error.response?.data || error.message);
+                        if (error.response?.status === 403) {
+                            console.error("Authentication failed. Please try logging in again.");
                         }
                     }
-                )
-                console.log(response.data)
-                router.push("/dashboard")
                 }
             }>Publish</PrimaryButton>
         </div>

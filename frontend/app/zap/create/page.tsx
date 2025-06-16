@@ -7,7 +7,9 @@ import { BACKEND_URL } from "@/app/config"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/Input"
 import Image from "next/image"
+import authAxios from "@/authAxios"
 import axios from "axios"
+
 export default function zapCreate() {
     const router = useRouter()
     const { availableActions, availableTriggers } = useAvailableActionsAndTriggers()
@@ -15,11 +17,11 @@ export default function zapCreate() {
         id:string;
         name:string;
     }>()
-    const [selectedAction, setSelectedAction] = useState<{
+    const [selectedActions, setSelectedActions] = useState<{
         index:number;
         availableActionId:string;
         availableActionName:string;
-        metadata:string;
+        metadata:any;
     }[]>([])
     const [selectedModalIndex,setSelecedModalIndex] = useState<number | null>(null)
     return <div>
@@ -30,26 +32,20 @@ export default function zapCreate() {
                     if(!selectedTrigger?.id) {
                         return;
                     }
-                    const token = localStorage.getItem("token");
-                    if (!token) {
-                        console.error("No token found");
-                        return;
-                    }
-                    console.log("Sending request with token:", token);
+                    console.log("Sending request with token:");
                     try {
-                        const response = await axios.post(`${BACKEND_URL}/api/v1/zap`,{
-                            "availableTriggerId":selectedTrigger.id,
-                            "triggerMetadata":{},
-                            "actions":selectedAction.map((action) => ({
-                                availableActionId:action.availableActionId,
-                                actionMetadata: action.metadata || {}
+                        const response = await axios.post(`${BACKEND_URL}/api/v1/zap`, {
+                            "availableTriggerId": selectedTrigger.id,
+                            "triggerMetadata": {},
+                            "actions": selectedActions.map(a => ({
+                                availableActionId: a.availableActionId,
+                                actionMetadata: a.metadata
                             }))
-                        },
-                        {
-                            headers:{
-                                Authorization: `Bearer ${token}`
+                        }, {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem("token")}`
                             }
-                        });
+                        })
                         console.log("Response:", response.data);
                         router.push("/dashboard");
                     } catch (error: any) {
@@ -61,25 +57,27 @@ export default function zapCreate() {
                 }
             }>Publish</PrimaryButton>
         </div>
-        <div className="w-full min-h-screen bg-slate-200 flex flex-col justify-center pt-[-40px]">
+        <div className="w-full min-h-screen bg-slate-200 flex flex-col justify-center">
             
             <div className="flex justify-center w-full">
                 <ZapCell onClick={()=>{
                     setSelecedModalIndex(1)
                 }} index={1}  name={selectedTrigger?.name? selectedTrigger.name : "Select a trigger"}  />
             </div>
+
             <div className="w-full pt-2 pb-2">
-                {selectedAction.map((action, index) => <div key={index} className="p-2 flex justify-center">
+                {selectedActions.map((action, index) => <div key={index} className="p-2 flex justify-center">
                     <ZapCell onClick={()=>{
                     setSelecedModalIndex(action.index)
                 }} index={action.index}  name={ action.availableActionName ? action.availableActionName : "Select an Action"}  />
                     </div>
                 )}
             </div>
+
             <div className="flex justify-center">
                     <div className="">
                         <PrimaryButton onClick={()=>{
-                        setSelectedAction( actions => [...actions, {index: actions.length + 2,availableActionId: "", availableActionName: "",metadata: ""}])
+                        setSelectedActions( actions => [...actions, {index: actions.length + 2,availableActionId: "", availableActionName: "",metadata:{}}])
                         }}><div className="text-2xl max-w-2 flex justify-center">+</div></PrimaryButton>
                     </div>
             </div>
@@ -96,7 +94,7 @@ export default function zapCreate() {
                         name: props.name
                     })
                 }else{
-                    setSelectedAction( action => {
+                    setSelectedActions( action => {
                         const newActions = [...action];
                         newActions[selectedModalIndex - 2] = {
                             index: selectedModalIndex,
@@ -196,12 +194,12 @@ function useAvailableActionsAndTriggers(){
     const [availableTriggers,setAvailableTriggers] = useState([])
 
     useEffect(()=>{
-        axios.get(`${BACKEND_URL}/api/v1/trigger/available`)
+        authAxios.get(`${BACKEND_URL}/api/v1/trigger/available`)
         .then(res=>{
             setAvailableTriggers(res.data.availableTriggers)
         })
 
-        axios.get(`${BACKEND_URL}/api/v1/action/available`)
+        authAxios.get(`${BACKEND_URL}/api/v1/action/available`)
         .then(res=>{
             setAvailebleActions(res.data.availableActions)
         })

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CheckFeature } from "@/components/CheckFeature";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/buttons/PrimaryButton";
-import axios from "axios";
+import authAxios from "@/authAxios";
 import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "../config";
 export default function (){
@@ -38,7 +38,7 @@ export default function (){
                     }} type="password" ></Input>
                     <div className="pt-4 px-10 py-1">
                         <PrimaryButton onClick={async()=>{
-                            const res = await axios.post(`${BACKEND_URL}/api/v1/user/signin`,{
+                            const res = await authAxios.post(`${BACKEND_URL}/api/v1/user/signin`,{
                                 username:email,
                                 password:password
                             })

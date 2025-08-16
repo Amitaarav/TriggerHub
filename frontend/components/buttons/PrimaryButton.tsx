@@ -18,7 +18,9 @@ export const PrimaryButton = ({ children,onClick,size="small" }: {
                     flex justify-center items-center
                     font-bold 
                     hover:bg-orange-700 
-                    group relative overflow-hidden`}
+                    group relative overflow-hidden 
+                    `
+                }
                 >
                 <span className="relative z-10 group-hover:text-shine">{children}</span>
                 {/* <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white to-white/10 opacity-0 group-hover:opacity-30 blur-sm animate-shimmer" /> */}

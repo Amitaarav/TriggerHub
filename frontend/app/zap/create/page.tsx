@@ -69,7 +69,7 @@ export default function zapCreate() {
                 {selectedActions.map((action, index) => <div key={index} className="p-2 flex justify-center">
                     <ZapCell onClick={()=>{
                     setSelecedModalIndex(action.index)
-                }} index={action.index}  name={ action.availableActionName ? action.availableActionName : "Select an Action"}  />
+                }} index={action.index}  name={ action.availableActionName ? action.availableActionName : "Select an Action"} />
                     </div>
                 )}
             </div>
@@ -175,8 +175,7 @@ function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props:
                                                 <Image alt="" className="rounded-full" src={image}  width={30} height={30} />
                                                 <div className="pr-2 font-semibold flex flex-col justify-center">{name}</div>
                                             
-                                                
-                                        </div>
+                                            </div>
                                 })
                         }
                         </div>)

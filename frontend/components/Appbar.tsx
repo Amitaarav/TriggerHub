@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react"
 import { LinkButton } from"./buttons/LinkButton";
 import { useRouter } from "next/navigation"
-import { PrimaryButton } from "./buttons/PrimaryButton";
-import { div } from "framer-motion/client";
 export const Appbar = () => {
     const [isLoggedIn, setLoggedIn] = useState(false)
 
@@ -25,24 +23,25 @@ export const Appbar = () => {
         router.push("/")
     }
 
-    return <div className="flex border-b justify-between p-4 bg-gray-100">
-        <div className="font-extrabold text-3xl flex flex-col justify-center cursor-pointer"
+    return (
+    <nav className ="fixed left-0 top-0 z-50 w-full flex border-b justify-between p-2 bg-gradient-to-b from-orange-600 to-orange-500 shadow-xl">
+        <div className="font-extrabold text-3xl flex flex-col justify-center cursor-pointer text-white"
         onClick={() => {
             router.push("/")
         }}>
             TriggerHub
         </div>
-        <div className="flex gap-4 font-medium">
+        <div className="flex font-medium">
             {
                 isLoggedIn ? (
-                    <>
+                    <div className="flex gap-2">
                         <LinkButton onClick={() => {}} >Contact Sales</LinkButton>
-                        <LinkButton onClick={handleLogout}   
+                        <LinkButton onClick={ handleLogout }   
                         >Logout</LinkButton>
-                    </>
+                    </div>
                     
                 ) :(
-                    <div className="flex gap-4">
+                    <div className="flex gap-2">
                         <LinkButton onClick={() => {}} >Contact Sales</LinkButton>
                         <LinkButton onClick={() => {
                             router.push("/login")
@@ -53,5 +52,6 @@ export const Appbar = () => {
             }
             
         </div>
-    </div>
+    </nav>
+    )
 }

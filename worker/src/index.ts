@@ -5,6 +5,7 @@ import { JsonObject } from '@prisma/client/runtime/library';
 import { parse } from './parser';
 import { sendEmail } from './email';
 import { sendSolana } from './solana';
+  
 const TOPIC_NAME = "zap-events"
 
 const kafka = new Kafka({
@@ -34,9 +35,11 @@ async function main(){
                 offset: message.offset,
                 value: message.value?.toString()
             })
+
             if(!message.value?.toString()){
                 return;
             }
+
             const parsedValue = JSON.parse(message.value?.toString())
 
             const zapRunId = parsedValue.zapRunId;
@@ -77,12 +80,14 @@ async function main(){
                 await sendEmail(to, body);
                 
             }
+
             if(currentAction.type.id === "send-solana"){
                 const amount = parse((currentAction.metadata as JsonObject)?.amount as string, zapRunDetails?.metadata, "{", "}"); // {comment.amount}
                 const to = parse((currentAction.metadata as JsonObject)?.email as string, zapRunDetails?.metadata, "{", "}"); // {comment.email}
                 console.log(`Sending out solana to ${to} with amount ${amount}`)
                 await sendSolana(to, amount);
             }
+
             await new Promise(resolve => setTimeout(resolve, 5000))
 
             const lastStage = (zapRunDetails?.zap.actions?.length || 1) - 1;
@@ -98,6 +103,7 @@ async function main(){
                     }]
                 })
             }
+            
             console.log(`committing offset ${message.offset} for partition ${partition} : done`)
             await consumer.commitOffsets([{
                 topic: TOPIC_NAME, 

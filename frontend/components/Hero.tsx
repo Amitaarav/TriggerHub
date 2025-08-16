@@ -6,10 +6,10 @@ import { Feature } from "./Feature";
 import { KnowTrigger}from "./KnowTrigger";
 export const Hero = () => {
     const router = useRouter()
-    return(<div>
+    return(<div className="mt-20">
             <div className="flex justify-center">
-                <div className="text-5xl font-bold text-center pt-4 max-w-xl">
-                    Automate as fast as you can type
+                <div className="text-6xl font-extrabold text-center pt-4 max-w-xl">
+                    Automate as fast as <br/> you can type
                 </div>
             </div>
             <div className="flex justify-center">

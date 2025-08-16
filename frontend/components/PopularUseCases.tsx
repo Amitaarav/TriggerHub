@@ -1,43 +1,59 @@
 "use client"
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 const useCases = [
-    { icon: '💼', title: 'Send Slack alerts when new leads arrive' },
-    { icon: '📧', title: 'Save Gmail attachments to Drive' },
-    { icon: '🛒', title: 'Get notified when orders are placed' },
-    { icon: '📅', title: 'Auto-create Calendar events from forms' },
-    ];
+  { icon: '🔗', title: 'Generate webhook to send Solana on workflow trigger' },
+  { icon: '📨', title: 'Send email after successful Solana transfer' },
+  { icon: '🪙', title: 'Notify via Telegram when wallet balance drops' },
+  { icon: '📁', title: 'Create Google Drive folders for new clients' },
+  { icon: '🧾', title: 'Upload invoices to Drive and notify accounting' },
+  { icon: '🧠', title: 'Summarize form submissions with AI and send to Notion' },
+  { icon: '📦', title: 'Create shipping label when payment is received' },
+  { icon: '✅', title: 'Auto-update task in ClickUp when GitHub PR is merged' },
+  { icon: '🧑‍💻', title: 'Post a hiring alert on Discord when job form is filled' },
+  { icon: '⚠️', title: 'Send SMS when server CPU exceeds 90%' },
+  { icon: '💬', title: 'Log chat messages to Airtable for analytics' },
+  { icon: '🔔', title: 'Trigger push notifications for new blog comments' },    
+  { icon: '💼', title: 'Send Slack alerts when new leads arrive' },
+  { icon: '📧', title: 'Save Gmail attachments to Drive' },
+  { icon: '🛒', title: 'Get notified when orders are placed' },
+  { icon: '📅', title: 'Auto-create Calendar events from forms' },
+];
+
+const duplicateUseCases = [
+    ...useCases,
+    ...useCases,
+];
 
 export function PopularUseCases() {
     return (
-        <section className="p-10 bg-orange-500 rounded-xl ">
+        <section className="p-10 bg-orange-500 rounded-xl sm:w-full ">
         <h2 className="text-3xl font-bold text-center mb-10 text-white">Popular Use Cases</h2>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 shadow-lg">
-            {useCases.map((useCase, index) => (
-            <motion.div
-                key={index}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15, duration: 0.6 }}
-                className="group bg-white p-6 rounded-2xl shadow-lg relative overflow-hidden transition-all duration-300"
-            >
-                <motion.div
-                whileHover={{
-                    scale: 1.2,
-                    zIndex: 50,
-                    x: 0,
-                    y: -10,
+
+        <div className="relative w-full overflow-hidden">
+            <motion.div 
+                className="flex space-x-4 min-w-full"
+                animate={{x: ["0%", "-50%"]}}
+                transition={{
+                    repeat: Infinity,
+                    repeatType: "loop",
+                    duration: 20,
+                    ease: "linear",
                 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-                className="flex flex-col items-center justify-center text-center cursor-pointer p-4"
                 >
-                <div className="text-5xl mb-4">{useCase.icon}</div>
+            {duplicateUseCases.map((useCase, index) => (
+            <div
+                key={index}
+                className="min-w-[250px] bg-white p-6 rounded-2xl shadow-md flex-shrink-2 flex flex-col items-center justify-center text-center"
+            >
+                <div className="text-5xl mb-3">{useCase.icon}</div>
                 <p className="text-base font-medium">{useCase.title}</p>
-                </motion.div>
-            </motion.div>
+
+            </div>
             ))}
+        </motion.div>
         </div>
         </section>
     );

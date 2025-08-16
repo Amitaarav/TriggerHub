@@ -2,7 +2,7 @@
 
 TriggerHub is a Zapier-like automation platform designed to handle event-driven workflows with a robust microservices architecture. It integrates with webhooks, Kafka for event streaming, and Prisma for database management.
 
-## 🌐 Extended Description
+## Description
 TriggerHub is built to simplify complex automation workflows by allowing users to create custom triggers and actions seamlessly. The platform is structured with a microservices architecture, ensuring that each component (frontend, backend, hooks, processor, worker) operates independently for optimal performance and scalability. Leveraging the power of Kafka for real-time data streaming and Prisma ORM for efficient database interactions, TriggerHub offers a highly responsive and fault-tolerant environment. 
 
 The platform supports:
@@ -11,7 +11,7 @@ The platform supports:
 - **Workflow Automation:** Design and manage workflows through user-friendly interfaces, powered by Next.js and React.
 - **Robust Data Management:** PostgreSQL and Prisma handle data integrity and scalability effortlessly.
 
-## 🚀 Features
+## Features
 - **Event-Driven Architecture:** Seamless handling of triggers and actions.
 - **Microservices:** Decoupled services for better scalability.
 - **Real-Time Processing:** Kafka-powered asynchronous message processing.
@@ -19,7 +19,7 @@ The platform supports:
 - **Secure Authentication:** JWT-based secure user authentication and authorization.
 - **Fault Tolerance:** Ensures reliable event processing with Kafka consumer groups and retries.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 - **Frontend:** Next.js, React, TypeScript, TailwindCSS, Axios, React-flow
 - **Backend:** Node.js, Express, Prisma, PostgreSQL
 - **Event Streaming:** Kafka
@@ -48,6 +48,10 @@ For **Backend (Primary & Hooks)**:
 ```bash
 cd primbackend
 npm install
+
+```
+### Hooks
+```
 cd ../hooks
 npm install
 ```
@@ -114,6 +118,12 @@ TriggerHub/
 └── worker/            # Kafka Event Worker
 ```
 
+
+## Hooks
+- Hook trigger is built to shoot a webhook link. 
+
+- Generally:
+- Webhooks lets to talk two backend communicate. Take example of stripe or razorpay. Banks only provide its APIs to certain compony like razorpay or stripe and razorpay tells hdfs like bank backend server that here is the create secret url, whenever payment happens, please hit our webhook... hdfc bank beckend tells razorpay via webhook if payment is succeded.Even razorpay need to tell main backend of application.
 ## Processor
 -Processor pushes data to kafka topic named "zap-events" with key "zap" and value as the event data. 
 
@@ -123,6 +133,6 @@ TriggerHub/
 
 ---
 
-Made with ❤️ by [Amit Kumar Gupta](https://github.com/Amitaarav) 🚀
+Made by [Amit Kumar Gupta](https://github.com/Amitaarav)
 
 

@@ -14,7 +14,7 @@ export default function(){
     const [password,setPassword] = useState("")
     return <div>
         <Appbar />
-        <div className="flex pt-8 max-w-4xl mx-auto flex-col md:flex-row items-center justify-center">
+        <div className="flex pt-8 max-w-4xl mx-auto flex-col md:flex-row items-center justify-center mt-30">
             <div className="flex pt-4 flex-col md:flex-row items-center justify-center">
                 <div className="flex-1 px-4">
                     <div className="font-semibold text-3xl pb-6">

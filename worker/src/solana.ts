@@ -1,18 +1,38 @@
-import { Connection, Keypair,LAMPORTS_PER_SOL,PublicKey,sendAndConfirmTransaction,SystemProgram,Transaction, } from "@solana/web3.js"
-import base58 from "bs58"
+import {
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
+import base58 from "bs58";
 
-const sol_hook = process.env.SOL_HOOK as string;
-const connection = new Connection(sol_hook,"finalized")
+const solHook = process.env.SOL_HOOK;
+const privateKey = process.env.SOL_PRIVATE_KEY;
 
-export const sendSolana = async(to: string, amount: string) => {
-    const keyPair = Keypair.fromSecretKey(base58.decode((process.env.SOL_PRIVATE_KEY ?? "")))
-    const transferTransaction = new Transaction().add(
-        SystemProgram.transfer({
-            fromPubkey: keyPair.publicKey,
-            toPubkey: new PublicKey(to),
-            lamports:parseFloat(amount) * LAMPORTS_PER_SOL
-        })
+if (!solHook) throw new Error("Missing SOL_HOOK");
+if (!privateKey) throw new Error(" Missing SOL_PRIVATE_KEY");
 
-    )
-    await sendAndConfirmTransaction(connection, transferTransaction,[keyPair]);
-}
+const connection = new Connection(solHook, "confirmed");
+
+export const sendSolana = async (to: string, amount: string) => {
+  const keyPair = Keypair.fromSecretKey(base58.decode(privateKey));
+
+  const lamports = Math.floor(Number(amount) * LAMPORTS_PER_SOL);
+
+  const transferTransaction = new Transaction().add(
+    SystemProgram.transfer({
+      fromPubkey: keyPair.publicKey,
+      toPubkey: new PublicKey(to),
+      lamports,
+    })
+  );
+
+  const signature = await sendAndConfirmTransaction(connection, transferTransaction, [keyPair]);
+
+  console.log(`Transaction successful: https://explorer.solana.com/tx/${signature}?cluster=mainnet-beta`);
+
+  return signature;
+};

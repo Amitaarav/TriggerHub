@@ -11,6 +11,7 @@ app.post("/hooks/catch/:userId/:zapId",async(req,res)=>{
     const zapId = req.params.zapId;
     const body = req.body
     try {
+        // store in the DB
         const response = await client.$transaction(async(tx)=>{
             const run = await tx.zapRun.create({
                 data:{
@@ -18,6 +19,7 @@ app.post("/hooks/catch/:userId/:zapId",async(req,res)=>{
                     metadata: body
                 }
             });
+
             await tx.zapRunOutbox.create({
                 data:{
                     zapRunId: run.id
@@ -28,7 +30,7 @@ app.post("/hooks/catch/:userId/:zapId",async(req,res)=>{
             }
         })
         res.json({
-            message: "Transaction successful",
+            message: "Webhook created successfully",
             data: response,
         });
     } catch (error) {

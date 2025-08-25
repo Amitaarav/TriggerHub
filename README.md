@@ -160,6 +160,13 @@ Many-to-One → Each Action is associated with exactly one AvailableAction type.
 
 One-to-One (optional) → Each ZapRun may have one ZapRunOutbox entry for reliable event dispatching.
 
+## Instrunction for mapping
+- ───< = One-to-Many
+
+- ─── = One-to-One
+
+- >─── = Many-to-One
+
 ### Hooks
 - Hook trigger is built to shoot a webhook link. 
 

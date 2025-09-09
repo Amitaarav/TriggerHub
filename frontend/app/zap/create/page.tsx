@@ -7,8 +7,7 @@ import { BACKEND_URL } from "@/app/config"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/Input"
 import Image from "next/image"
-import authAxios from "@/authAxios"
-import axios from "axios"
+import authAxios from "@/utils/authAxios"
 
 export default function zapCreate() {
     const router = useRouter()
@@ -34,7 +33,7 @@ export default function zapCreate() {
                     }
                     console.log("Sending request with token:");
                     try {
-                        const response = await axios.post(`${BACKEND_URL}/api/v1/zap`, {
+                        const response = await authAxios.post(`${BACKEND_URL}/api/v1/zap`, {
                             "availableTriggerId": selectedTrigger.id,
                             "triggerMetadata": {},
                             "actions": selectedActions.map(a => ({
@@ -120,7 +119,7 @@ function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props:
     const isTrigger = index === 1;
 
     return <div>
-        <div  className="  fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-slate-100 bg-opacity-70 flex ">
+        <div  className="  fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-slate-100 bg-opacity-70 flex mt-20">
     <div className="relative p-4 w-full max-w-2xl max-h-full">
         
         <div className="relative bg-white rounded-lg shadow ">

@@ -9,7 +9,7 @@ export const Appbar = () => {
 
     useEffect(() => {
         const token = localStorage.getItem("token")
-        setLoggedIn(!!token)  // Set to true if token exists, false if null
+        setLoggedIn(!!token)
     }, [])
 
     const handleLogin = () => {
@@ -25,24 +25,28 @@ export const Appbar = () => {
 
     return (
     <nav className ="fixed left-0 top-0 z-50 w-full flex border-b justify-between p-2 bg-gradient-to-b from-orange-600 to-orange-500 shadow-xl">
-        <div className="font-extrabold text-3xl flex flex-col justify-center cursor-pointer text-white"
+        <div className="font-extrabold text-3xl flex flex-col justify-center cursor-pointer text-white bg-clip-text text-transparent bg-gradient-to-tr from-gray-200 via-gray-100 to-gray-200"
         onClick={() => {
             router.push("/")
         }}>
             TriggerHub
         </div>
-        <div className="flex font-medium">
-            {
-                isLoggedIn ? (
+
+        <div className="flex font-medium gap-2">
+            <LinkButton onClick={() => {}} >Contact Sales</LinkButton>
+            <span className="">
+                {
+                !isLoggedIn ? (
+
                     <div className="flex gap-2">
-                        <LinkButton onClick={() => {}} >Contact Sales</LinkButton>
+                        
                         <LinkButton onClick={ handleLogout }   
                         >Logout</LinkButton>
                     </div>
                     
                 ) :(
                     <div className="flex gap-2">
-                        <LinkButton onClick={() => {}} >Contact Sales</LinkButton>
+                        
                         <LinkButton onClick={() => {
                             router.push("/login")
                         }} >Login</LinkButton>
@@ -50,6 +54,7 @@ export const Appbar = () => {
                 )
                 
             }
+            </span>
             
         </div>
     </nav>

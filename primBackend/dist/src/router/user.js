@@ -16,9 +16,9 @@ exports.userRouter = void 0;
 const express_1 = require("express");
 const types_1 = require("../types");
 const db_1 = require("../db");
-const middleware_1 = require("../middleware");
+const authMiddleware_1 = require("../middleware/authMiddleware");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const config_1 = require("../config");
+const config_1 = require("../config/config");
 const router = (0, express_1.Router)();
 router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
@@ -63,9 +63,10 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
         return;
     }
     const token = jsonwebtoken_1.default.sign({ id: userExists.id }, config_1.JWT_PASSWORD, { expiresIn: "1h" });
-    res.status(200).json({ token });
+    //
+    res.status(200).json({ token, userExists });
 }));
-router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //@ts-ignore
     const id = req.id;
     const user = yield db_1.prismaClient.user.findFirst({

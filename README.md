@@ -26,6 +26,9 @@ The platform supports:
 - **Database:** PostgreSQL with Prisma ORM
 - **Dev Tools:** ESLint, TypeScript, Docker
 
+## What it does? 
+It includes Webhook as trigger and email and solana transaction with some metadata as email address, comment 
+
 ## 📦 Installation
 ### Prerequisites
 - Node.js

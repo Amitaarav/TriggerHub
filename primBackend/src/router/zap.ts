@@ -1,15 +1,17 @@
 import { Router,Request, Response } from "express";
-import { authMiddleware, CustomRequest } from "../middleware";
+import { authMiddleware, CustomRequest } from "../middleware/authMiddleware";
 import { zapCreateSchema } from "../types";
 import { prismaClient } from "../db";
 
 const router = Router();
 
 router.post("/", authMiddleware, async (req: Request, res: Response) => {
+  
   const id = (req as CustomRequest).id;
   const body = req.body;
 
   const parsedData = zapCreateSchema.safeParse(body);
+
   if (!parsedData.success) {
     console.log("Validation Error:", parsedData.error.message);
     res.status(400).send("Validation Error: " + parsedData.error.message);

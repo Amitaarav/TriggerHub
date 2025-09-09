@@ -1,13 +1,15 @@
 import { Router } from "express";
 import { SignupSchema,SigninSchema } from "../types";
 import { prismaClient } from "../db";
-import { authMiddleware } from "../middleware";
+import { authMiddleware } from "../middleware/authMiddleware";
 import jwt from "jsonwebtoken";
-import { JWT_PASSWORD } from "../config"
+import { JWT_PASSWORD } from "../config/config"
+import bcrypt from "bcrypt"
 const router = Router();
 
 router.post("/signup",async(req,res)=>{
-    const body = req.body;
+
+        const body = req.body;
         const parsedData = SignupSchema.safeParse(body);
     
         if(!parsedData.success){
@@ -23,12 +25,15 @@ router.post("/signup",async(req,res)=>{
 
         if(userExists){
             res.status(403).json({error:"User already exists"});
+            return; // Adding return here to prevent duplicate creation
         }
+
+        const hashedPassword = await bcrypt.hash(parsedData.data.password, 10);
 
         await prismaClient.user.create({
             data:{
                 email:parsedData.data.username,
-                password:parsedData.data.password,
+                password:hashedPassword,
                 name:parsedData.data.name
             }
         })
@@ -47,8 +52,7 @@ router.post("/signin",async(req,res)=>{
     }
     const userExists = await prismaClient.user.findFirst({
         where:{
-            email:parsedData.data.username,
-            password:parsedData.data.password
+            email:parsedData.data.username,            
         }
     })
 
@@ -57,13 +61,20 @@ router.post("/signin",async(req,res)=>{
         return;
     }
 
+    const isValid = await bcrypt.compare(parsedData.data.password,userExists.password);
+
+    if(!isValid){
+        res.status(403).json({error:"Invalid password"});
+        return;
+    }
+
     const token = jwt.sign(
         { id: userExists.id },
         JWT_PASSWORD as string,
         { expiresIn: "1h" }
     );
-
-    res.status(200).json({ token });
+    //
+    res.status(200).json({ token, userExists });
 })
 
 router.get("/",authMiddleware,async(req,res)=>{

@@ -1,1 +1,14 @@
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+<svg width="70" height="70" viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+  <!-- Circular Flow (represents Kafka streaming + triggers) -->
+  <circle cx="35" cy="35" r="30" fill="#4F46E5"></circle>
+  
+  <!-- Three connected nodes inside circle -->
+  <circle cx="25" cy="25" r="5" fill="#ffffff"></circle>
+  <circle cx="45" cy="25" r="5" fill="#ffffff"></circle>
+  <circle cx="35" cy="45" r="5" fill="#ffffff"></circle>
+  
+  <!-- Connecting lines -->
+  <line x1="25" y1="25" x2="45" y2="25" stroke="#ffffff" stroke-width="2.5"></line>
+  <line x1="25" y1="25" x2="35" y2="45" stroke="#ffffff" stroke-width="2.5"></line>
+  <line x1="45" y1="25" x2="35" y2="45" stroke="#ffffff" stroke-width="2.5"></line>
+</svg>

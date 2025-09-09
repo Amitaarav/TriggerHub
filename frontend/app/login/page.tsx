@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CheckFeature } from "@/components/CheckFeature";
 import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/buttons/PrimaryButton";
-import authAxios from "@/authAxios";
+import authAxios from "@/utils/authAxios";
 import { useRouter } from "next/navigation";
 import { BACKEND_URL } from "../config";
 export default function (){
@@ -42,7 +42,9 @@ export default function (){
                                 username:email,
                                 password:password
                             })
+
                             localStorage.setItem("token",res.data.token)
+                            
                             router.push("/dashboard")
                         }} size="big">Login</PrimaryButton>
                     </div>

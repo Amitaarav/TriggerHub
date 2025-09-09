@@ -3,11 +3,10 @@ import { Appbar } from "@/components/Appbar"
 import { DarkButton } from "@/components/buttons/DarkButton"
 import { useState, useEffect } from "react"
 import { BACKEND_URL, HOOKS_URL } from "../config"
-import authAxios from "@/authAxios"
+import authAxios from "@/utils/authAxios"
 import { useRouter } from "next/navigation"
 import { LinkButton } from "@/components/buttons/LinkButton"
 import Image from "next/image"
-import axios from "axios"
 
 const Dashboard = () => {
     const router = useRouter()
@@ -16,7 +15,7 @@ const Dashboard = () => {
     return (
         <div>
             <Appbar />
-            <div className="flex justify-center pt-8">
+            <div className="flex justify-center pt-8 mt-12">
                 <div className="max-w-2xl w-full">
                     <div className="flex justify-between pr-8">
                         <div className="font-bold text-gray-700 text-xl">
@@ -75,18 +74,7 @@ function useZaps() {
     const [zaps, setZaps] = useState<Zap[]>([]);
   
     useEffect(() => {
-      const token = localStorage.getItem("token");
-      console.log(token)
-      if (!token) {
-        console.error("Token not found. Redirect to login?");
-        return;
-      }
-  
-      axios.get(`${BACKEND_URL}/api/v1/zap`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+      authAxios.get(`${BACKEND_URL}/api/v1/zap`)
         .then((res) => {
           setZaps(res.data.zaps);
           setLoading(false);

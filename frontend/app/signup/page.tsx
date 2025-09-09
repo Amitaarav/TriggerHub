@@ -6,7 +6,7 @@ import { Input } from "@/components/Input";
 import { PrimaryButton } from "@/components/buttons/PrimaryButton";
 import { BACKEND_URL } from "../config";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "axios"
 export default function(){
     const router = useRouter()
     const [name,setName] = useState("")
@@ -14,7 +14,7 @@ export default function(){
     const [password,setPassword] = useState("")
     return <div>
         <Appbar />
-        <div className="flex pt-8 max-w-4xl mx-auto flex-col md:flex-row items-center justify-center mt-30">
+        <div className="flex pt-8 max-w-4xl mx-auto flex-col md:flex-row items-center justify-center mt-40">
             <div className="flex pt-4 flex-col md:flex-row items-center justify-center">
                 <div className="flex-1 px-4">
                     <div className="font-semibold text-3xl pb-6">
@@ -47,9 +47,9 @@ export default function(){
                                 password:password,
                                 name:name
                             })
-                            console.log(res);
+                            // console.log(res);
                             router.push("/login")
-                        }} size="big">Get started free</PrimaryButton>
+                        }} size="big">Signin</PrimaryButton>
                     </div>
                 </div>
             </div>

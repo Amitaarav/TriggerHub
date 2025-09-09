@@ -11,11 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.zapRouter = void 0;
 const express_1 = require("express");
-const middleware_1 = require("../middleware");
+const authMiddleware_1 = require("../middleware/authMiddleware");
 const types_1 = require("../types");
 const db_1 = require("../db");
 const router = (0, express_1.Router)();
-router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.id;
     const body = req.body;
     const parsedData = types_1.zapCreateSchema.safeParse(body);
@@ -63,7 +63,7 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
         res.status(500).send("Internal server error while creating zap.");
     }
 }));
-router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.id;
     try {
         const zaps = yield db_1.prismaClient.zap.findMany({
@@ -81,7 +81,7 @@ router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, voi
     }
 }));
 // GET /zap/:zapId - Get single zap for authenticated user
-router.get("/:zapId", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/:zapId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.id;
     const zapId = req.params.zapId;
     try {

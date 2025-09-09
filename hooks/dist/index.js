@@ -22,6 +22,7 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
     const zapId = req.params.zapId;
     const body = req.body;
     try {
+        // store in the DB
         const response = yield client.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
             const run = yield tx.zapRun.create({
                 data: {
@@ -39,7 +40,7 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
             };
         }));
         res.json({
-            message: "Transaction successful",
+            message: "Webhook created successfully",
             data: response,
         });
     }

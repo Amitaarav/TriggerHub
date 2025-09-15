@@ -13,7 +13,7 @@ export default function (){
     const [password,setPassword] = useState("")
     return <div>
         <Appbar />
-        <div className="flex pt-8 max-w-4xl mx-auto flex-col md:flex-row items-center justify-center mt-20">
+        <div className="flex pt-8 max-w-4xl mx-auto flex-col md:flex-row items-center justify-center mt-28">
             <div className="flex pt-4 flex-col md:flex-row items-center justify-center">
                 <div className="flex-1 px-4">
                     <div className="font-semibold text-3xl pb-6">
@@ -38,6 +38,8 @@ export default function (){
                     }} type="password" ></Input>
                     <div className="pt-4 px-10 py-1">
                         <PrimaryButton onClick={async()=>{
+                            try{
+                                
                             const res = await authAxios.post(`${BACKEND_URL}/api/v1/user/signin`,{
                                 username:email,
                                 password:password
@@ -45,8 +47,17 @@ export default function (){
 
                             localStorage.setItem("token",res.data.token)
                             
-                            router.push("/dashboard")
+                            
+                            router.push("/dashboard")}
+                            catch(err : any){
+                                alert(err.response?.data?.error || "Login failed. Please try again.")
+                            }
+
                         }} size="big">Login</PrimaryButton>
+                        
+                        <div className="pl-12 text-lg">
+                            Don't have an account? <a className="text-blue-600" href="/signup">Signup</a>
+                        </div>
                     </div>
                 </div>
             </div>

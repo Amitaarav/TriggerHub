@@ -36,7 +36,7 @@ export const Appbar = () => {
             <LinkButton onClick={() => {}} >Contact Sales</LinkButton>
             <span className="">
                 {
-                !isLoggedIn ? (
+                isLoggedIn ? (
 
                     <div className="flex gap-2">
                         

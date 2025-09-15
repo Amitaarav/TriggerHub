@@ -40,10 +40,6 @@ export default function zapCreate() {
                                 availableActionId: a.availableActionId,
                                 actionMetadata: a.metadata
                             }))
-                        }, {
-                            headers: {
-                                Authorization: `Bearer ${localStorage.getItem("token")}`
-                            }
                         })
                         console.log("Response:", response.data);
                         router.push("/dashboard");

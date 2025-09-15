@@ -19,6 +19,7 @@ const db_1 = require("../db");
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../config/config");
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const router = (0, express_1.Router)();
 router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
@@ -34,11 +35,13 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
     });
     if (userExists) {
         res.status(403).json({ error: "User already exists" });
+        return; // Adding return here to prevent duplicate creation
     }
+    const hashedPassword = yield bcrypt_1.default.hash(parsedData.data.password, 10);
     yield db_1.prismaClient.user.create({
         data: {
             email: parsedData.data.username,
-            password: parsedData.data.password,
+            password: hashedPassword,
             name: parsedData.data.name
         }
     });
@@ -55,11 +58,15 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
     const userExists = yield db_1.prismaClient.user.findFirst({
         where: {
             email: parsedData.data.username,
-            password: parsedData.data.password
         }
     });
     if (!userExists) {
         res.status(403).json({ error: "User does not exist" });
+        return;
+    }
+    const isValid = yield bcrypt_1.default.compare(parsedData.data.password, userExists.password);
+    if (!isValid) {
+        res.status(403).json({ error: "Invalid password" });
         return;
     }
     const token = jsonwebtoken_1.default.sign({ id: userExists.id }, config_1.JWT_PASSWORD, { expiresIn: "1h" });

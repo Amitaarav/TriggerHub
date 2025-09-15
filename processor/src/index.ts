@@ -8,7 +8,7 @@ const TOPIC_NAME = "zap-events"
 
 const kafka = new Kafka({
     clientId: 'outbox-processor',
-    brokers: ['localhost:9092'] // yet to update with your Kafka broker address
+    brokers: ['localhost:9092']
 })
 
 async function main(){

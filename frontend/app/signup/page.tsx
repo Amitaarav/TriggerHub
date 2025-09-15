@@ -41,15 +41,26 @@ export default function(){
                         setPassword(e.target.value)
                     }} type="password" ></Input>
                     <div className="pt-4 px-10 py-1">
-                        <PrimaryButton onClick={async()=>{
-                            const res = await axios.post(`${BACKEND_URL}/api/v1/user/signup`,{
-                                username:email,
-                                password:password,
-                                name:name
-                            })
-                            // console.log(res);
-                            router.push("/login")
-                        }} size="big">Signin</PrimaryButton>
+                    <PrimaryButton
+                    size="big"
+                    onClick={async () => {
+                        try {
+                            const res = await axios.post(`${BACKEND_URL}/api/v1/user/signup`, {
+                                username: email,
+                                password: password,
+                                name: name
+                            });
+                                router.push("/login");
+                                    } catch (err: any) {
+                                        alert(err.response?.data?.error || "Signup failed. Please try again.");
+                                    }
+                                }}
+                            >
+                        Signup
+                    </PrimaryButton>
+                        <div className="pl-12 text-lg">
+                            Already have an account? <a className="text-blue-600" href="/login">Login</a>
+                        </div>
                     </div>
                 </div>
             </div>

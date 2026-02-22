@@ -22,11 +22,15 @@ const kafka = new kafkajs_1.Kafka({
 const prismaClient = new client_1.PrismaClient();
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
+        // create a consumer
         const consumer = kafka.consumer({ groupId: 'main-worker' });
+        // connect the consumer to the broker
         yield consumer.connect();
+        // consumer subscribe to the topic
         yield consumer.subscribe({ topic: TOPIC_NAME, fromBeginning: true });
         // create a producer to send the next stage
         const producer = kafka.producer();
+        // connect the producer to the broker
         yield producer.connect();
         yield consumer.run({
             autoCommit: false,

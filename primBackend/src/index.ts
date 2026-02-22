@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express'
 import { zapRouter } from './router/zap';
 import { userRouter } from './router/user';

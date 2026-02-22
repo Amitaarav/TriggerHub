@@ -17,13 +17,18 @@ const prismaClient = new PrismaClient();
 
 async function main(){
 
+    // create a consumer
     const consumer = kafka.consumer({groupId: 'main-worker'});
+    // connect the consumer to the broker
     await consumer.connect();
 
+    // consumer subscribe to the topic
     await consumer.subscribe({topic: TOPIC_NAME, fromBeginning: true});
 
     // create a producer to send the next stage
     const producer = kafka.producer();
+
+    // connect the producer to the broker
     await producer.connect();
 
     await consumer.run({

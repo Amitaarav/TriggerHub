@@ -111,6 +111,64 @@ npm run dev
 npm run test
 ```
 
+## System Architecture
+
+```mermaid
+graph TD
+    User([User])
+    Frontend[Frontend - Next.js]
+    Backend[Primary Backend - Express]
+    Hooks[Hooks Service - Express]
+    DB[(PostgreSQL - Prisma)]
+    Kafka{Kafka}
+    Processor[Processor - Node.js]
+    Worker[Worker - Node.js]
+
+    User <--> Frontend
+    Frontend <--> Backend
+    Backend <--> DB
+    
+    ExternalSource[External Source] --> Hooks
+    Hooks --> DB
+    Processor -- Polls --> DB
+    Processor -- Produces --> Kafka
+    Kafka -- Consumes --> Worker
+    Worker -- Executes --> FinalAction[Email / Solana / etc.]
+```
+
+## Trigger Flow (Transactional Outbox Pattern)
+
+```mermaid
+sequenceDiagram
+    participant Ext as External Source
+    participant Hooks as Hooks Service
+    participant DB as PostgreSQL
+    participant Proc as Processor
+    participant Kafka as Kafka
+    participant Worker as Worker
+    participant Action as Actions (Email/Solana)
+
+    Ext->>Hooks: Trigger Webhook
+    activate Hooks
+    Hooks->>DB: Start Transaction
+    Hooks->>DB: Insert ZapRun
+    Hooks->>DB: Insert ZapRunOutbox
+    Hooks->>DB: Commit Transaction
+    deactivate Hooks
+    
+    loop Polling
+        Proc->>DB: Fetch pending Outbox events
+        DB-->>Proc: Event data
+        Proc->>Kafka: Publish event (zap-events)
+        Proc->>DB: Delete processed Outbox entry
+    end
+
+    Kafka->>Worker: Dispatch event
+    activate Worker
+    Worker->>Action: Execute Zap Actions
+    deactivate Worker
+```
+
 ## 🗂️ Project Structure
 ```
 TriggerHub/

@@ -2,8 +2,8 @@ FROM node:24-alpine3.21
 
 WORKDIR /app
 
-COPY package.json .
-COPY package-lock.json .
+COPY ./primBackend/package.json .
+COPY ./primBackend/package-lock.json .
 
 RUN npm install --legacy-peer-deps
 

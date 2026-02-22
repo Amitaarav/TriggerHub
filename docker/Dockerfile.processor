@@ -2,8 +2,8 @@ FROM node:24-alpine3.21
 
 WORKDIR /app
 
-COPY package.json .
-COPY package-lock.json .
+COPY ./processor/package.json .
+COPY ./processor/package-lock.json .
 
 RUN npm install --legacy-peer-deps
 

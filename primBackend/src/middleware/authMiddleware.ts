@@ -26,22 +26,25 @@ export function authMiddleware(
     return;
   }
 
-  console.log("authHeader: ",authHeader);
-
   const token = authHeader.split(" ")[1];
-
-  console.log("Token: " , token);
 
   try {
     const payload = jwt.verify(token, JWT_PASSWORD) as JWTPayload;
-    console.log("payload: ", payload);
     (req as CustomRequest).id = payload.id;
 
     next();
-    
-  } catch (err) {
+
+  } catch (err: any) {
 
     console.error("JWT verification failed:", err);
-    res.status(403).json({ message: "Sorry! You are not logged in" });
+
+    // Provide more specific error messages for different JWT errors
+    if (err.name === 'TokenExpiredError') {
+      res.status(401).json({ message: "Token expired. Please login again." });
+    } else if (err.name === 'JsonWebTokenError') {
+      res.status(401).json({ message: "Invalid token. Please login again." });
+    } else {
+      res.status(403).json({ message: "Authentication failed. Please login again." });
+    }
   }
 }

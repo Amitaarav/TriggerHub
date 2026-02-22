@@ -72,8 +72,10 @@ model ZapRun{
   zapRunOutbox ZapRunOutbox?
 }
 
-model ZapRunOutbox{
-  id String @id @default(uuid())
+model ZapRunOutbox {
+  id       String @id @default(uuid())
   zapRunId String @unique
-  zapRun ZapRun @relation(fields: [zapRunId], references: [id])
+  zapRun   ZapRun @relation(fields: [zapRunId], references: [id])
+  processed Boolean @default(false)
+  createdAt DateTime @default(now())
 }

@@ -1,79 +1,103 @@
+version: "3.9"
+
 services:
   frontend:
     build:
       context: .
       dockerfile: docker/Dockerfile.fe
-    ports:
-      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     depends_on:
-      - primbackend
+      primbackend:
+        condition: service_started
+    networks:
+      - frontend-net
+      - backend-net
 
   primbackend:
     build:
       context: .
       dockerfile: docker/Dockerfile.primbackend
-    ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - backend-net
+      - data-net
 
   processor:
     build:
       context: .
       dockerfile: docker/Dockerfile.processor
+    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      KAFKA_BROKERS: ${KAFKA_BROKERS}
-      KAFKA_CREATE_TOPICS: "zap-events:1:1"
+      KAFKA_BROKERS: kafka:9092
+      # KAFKA_CREATE_TOPICS: "zap-events:3:1"
     depends_on:
-      - db
-      - kafka
+      db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - data-net
 
   worker:
     build:
       context: .
       dockerfile: docker/Dockerfile.worker
+    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      KAFKA_BROKERS: ${KAFKA_BROKERS}
-      KAFKA_CREATE_TOPICS: "zap-events:1:1"
+      KAFKA_BROKERS: kafka:9092
+      # KAFKA_CREATE_TOPICS: "zap-events:3:1"
     depends_on:
-      - db
-      - kafka
+      db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - data-net
 
   hooks:
     build:
       context: .
       dockerfile: docker/Dockerfile.hooks
-    ports:
-      - "${HOOK_PORT}:${HOOK_PORT}"
+    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - backend-net
+      - data-net
 
   db:
     image: postgres:16-alpine
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "${POSTGRES_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./docker/db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data-net
 
   kafka:
-    image: bitnami/kafka:3.7
-    restart: always
-    ports:
-      - "9092:9092"
+    image: apache/kafka:3.7.0
+    restart: unless-stopped
     environment:
       KAFKA_ENABLE_KRAFT: yes
       KAFKA_CFG_PROCESS_ROLES: broker,controller
@@ -82,6 +106,46 @@ services:
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
       ALLOW_PLAINTEXT_LISTENER: yes
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - data-net
+
+  kafka-init:
+    image: apache/kafka:3.7.0
+    depends_on:
+      kafka:
+        condition: service_started
+    entrypoint: ["/bin/sh", "-c"]
+    restart: "no"
+    command: >
+      "
+      echo 'Waiting for Kafka...';
+
+      until kafka-topics.sh --list --bootstrap-server kafka:9092; do
+        echo 'Kafka not ready...';
+        sleep 2;
+      done;
+
+      echo 'Creating topics...';
+
+      kafka-topics.sh --create \
+        --topic zap-events \
+        --partitions 3 \
+        --replication-factor 1 \
+        --if-not-exists \
+        --bootstrap-server kafka:9092;
+
+      echo 'Topics created successfully';
+      "
+    networks:
+      - data-net
 
 volumes:
   db_data:
+  kafka_data:
+
+networks:
+  frontend-net:
+  backend-net:
+  data-net:

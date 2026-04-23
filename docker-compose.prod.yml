@@ -1,0 +1,46 @@
+services:
+  frontend:
+    ports:
+      - "80:3000"
+
+  primbackend:
+    ports:
+      - "4000:4000"
+
+  hooks:
+    ports:
+      - "5000:5000"
+
+  db:
+    # no ports exposed
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  kafka:
+    # no ports exposed
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1"
+
+  processor:
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+
+  worker:
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 512M
+
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# scale manually 
+# docker compose up --scale worker=3 --scale processor=2

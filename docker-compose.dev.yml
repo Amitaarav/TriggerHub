@@ -1,0 +1,30 @@
+services:
+  frontend:
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    environment:
+      NODE_ENV: development
+
+  primbackend:
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+    environment:
+      NODE_ENV: development
+
+  hooks:
+    ports:
+      - "5000:5000"
+
+  db:
+    ports:
+      - "5432:5432"
+
+  kafka:
+    ports:
+      - "9092:9092"
+
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build

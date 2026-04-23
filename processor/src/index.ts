@@ -41,7 +41,7 @@ async function main() {
                 topic: TOPIC_NAME,
                 messages: pendingRows.map(r => ({
                     // Use the Outbox ID as the key for partitioning/ordering (optional but recommended)
-                    key: r.id.toString(), 
+                    key: r.zapRunId.toString(),  // kafka decide partition strategy using: hash(key) % number_of_partitions
                     // Send minimal, necessary data
                     value: JSON.stringify({ zapRunId: r.zapRunId, outboxId: r.id, stage: 0 })
                 }))

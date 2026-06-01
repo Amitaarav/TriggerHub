@@ -6,21 +6,25 @@ export const parse = (body: string, zapMetadata: any, startDelimeter = "{", endD
     while(endIndex < body.length){
         if(body[startIndex] === startDelimeter){
             let endPointer = startIndex + 2;
-            while(body[endIndex] !== endDelimeter){
+            while(body[endPointer] !== endDelimeter){
                 endPointer++;
             }
-            let stringHoldingValue = body.slice(startIndex+1, endPointer);
-            const keys = stringHoldingValue.split(".");
+            // enpointer located at the "}"
+
+            let stringHoldingValue = body.slice(startIndex+1, endPointer); // comment.amount
+            const keys = stringHoldingValue.split("."); // keys : amount
+
             let localValues = {
-                ...zapMetadata,
+                ...zapMetadata, // include all previous valuesof zapMetadata
             }
+
             for(let key of keys){
                 if(typeof localValues === "string"){
                     localValues = JSON.parse(localValues);
                 }
-                localValues = localValues[key];
+                localValues = localValues[key]; // localvalues[amount]
             }
-            finalString += localValues;
+            finalString += localValues; // amount
             startIndex = endPointer + 1;
             endPointer = endPointer + 2;
         }

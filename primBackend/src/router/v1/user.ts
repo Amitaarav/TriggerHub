@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { SignupSchema,SigninSchema } from "../types";
-import { prismaClient } from "../db";
-import { authMiddleware } from "../middleware/authMiddleware";
+import { SignupSchema,SigninSchema } from "../../types";
+import { prisma } from "../../db";
+import { authMiddleware } from "../../middleware/authMiddleware";
 import jwt from "jsonwebtoken";
-import { JWT_PASSWORD } from "../config/config"
+import { configEnv } from "../../config/env-config"
 import bcrypt from "bcrypt"
 const router = Router();
 
@@ -17,7 +17,7 @@ router.post("/signup",async(req,res)=>{
             return ;
         }
 
-        const userExists = await prismaClient.user.findFirst({
+        const userExists = await prisma.user.findFirst({
             where:{
                 email:parsedData.data.username,
             }
@@ -30,7 +30,7 @@ router.post("/signup",async(req,res)=>{
 
         const hashedPassword = await bcrypt.hash(parsedData.data.password, 10);
 
-        await prismaClient.user.create({
+        await prisma.user.create({
             data:{
                 email:parsedData.data.username,
                 password:hashedPassword,
@@ -50,7 +50,7 @@ router.post("/signin",async(req,res)=>{
         res.status(400).json({error:"Invalid data"});
         return;
     }
-    const userExists = await prismaClient.user.findFirst({
+    const userExists = await prisma.user.findFirst({
         where:{
             email:parsedData.data.username,            
         }
@@ -70,7 +70,7 @@ router.post("/signin",async(req,res)=>{
 
     const token = jwt.sign(
         { id: userExists.id },
-        JWT_PASSWORD as string,
+        configEnv.jwtSecret as string,
         { expiresIn: "1h" }
     );
     //
@@ -80,7 +80,7 @@ router.post("/signin",async(req,res)=>{
 router.get("/",authMiddleware,async(req,res)=>{
     //@ts-ignore
     const id = req.id;
-    const user = await prismaClient.user.findFirst({
+    const user = await prisma.user.findFirst({
         where:{
             id:id
         }

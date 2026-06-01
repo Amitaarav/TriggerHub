@@ -1,9 +1,20 @@
 services:
+  npm-cache:
+    image: verdaccio/verdaccio:5
+    ports:
+      - "4873:4873"          # exposed to host so BuildKit can reach it
+    volumes:
+      - npm_cache:/verdaccio/storage
+      - ./docker/verdaccio/config.yaml:/verdaccio/conf/config.yaml:ro
+    # no networks needed — BuildKit reaches it via the host port, not compose network
+
   frontend:
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     environment:
       NODE_ENV: development
 
@@ -11,13 +22,37 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - .:/app
+      - ./primBackend:/app
+      - /app/node_modules
     environment:
       NODE_ENV: development
+    command: ["npx", "tsx", "watch", "src/index.ts"]   # hot reload
 
   hooks:
     ports:
       - "5000:5000"
+    volumes:
+      - ./hooks:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+    command: ["npx", "tsx", "watch", "src/index.ts"]
+
+  processor:
+    volumes:
+      - ./processor:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+    command: ["npx", "tsx", "watch", "src/index.ts"]
+
+  worker:
+    volumes:
+      - ./worker:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+    command: ["npx", "tsx", "watch", "src/index.ts"]
 
   db:
     ports:
@@ -27,4 +62,8 @@ services:
     ports:
       - "9092:9092"
 
+volumes:
+  npm_cache:
+      
+# Usage:
 # docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build

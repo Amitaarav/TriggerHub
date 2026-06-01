@@ -1,45 +1,88 @@
-version: "3.9"
-
 services:
   frontend:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.fe
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.fe
+    #   args:
+    #     NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    command: sh -c "npm install && npm run dev"
     depends_on:
       primbackend:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - frontend-net
       - backend-net
 
   primbackend:
+    ports:
+      - "4000:4000"
     build:
-      context: .
-      dockerfile: docker/Dockerfile.primbackend
+      context: ./primBackend
+      dockerfile: ../docker/Dockerfile.backend
     restart: unless-stopped
+    # entrypoint: ["sh", "/usr/local/bin/entrypoint.sh"]
+    # command: ["node", "dist/index.js"]
+    volumes:
+      - ./primBackend:/app
+      - primbackend_node_modules:/app/node_modules
+    command: sh -c "npm install && npx prisma generate && npm run dev"
+    # volumes:
+    #   - ./docker/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - backend-net
       - data-net
 
   processor:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.processor
+      context: ./processor
+      dockerfile: ../docker/Dockerfile.backend
     restart: unless-stopped
+    # entrypoint: ["sh", "/usr/local/bin/entrypoint.sh"]
+    # command: ["node", "dist/index.js"]
+    volumes:
+      - ./processor:/app
+      - processor_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       KAFKA_BROKERS: kafka:9092
-      # KAFKA_CREATE_TOPICS: "zap-events:3:1"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
     depends_on:
       db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
@@ -48,15 +91,27 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
+      context: ./worker
+      dockerfile: ../docker/Dockerfile.backend
     restart: unless-stopped
+    # entrypoint: ["sh", "/usr/local/bin/entrypoint.sh"]
+    volumes:
+      - ./worker:/app
+      - worker_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev"
+    # volumes:
+    # - ./docker/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
       KAFKA_BROKERS: kafka:9092
-      # KAFKA_CREATE_TOPICS: "zap-events:3:1"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
     depends_on:
       db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
@@ -65,14 +120,33 @@ services:
 
   hooks:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.hooks
+      context: ./hooks
+      dockerfile: ../docker/Dockerfile.backend
     restart: unless-stopped
+    # entrypoint: ["sh", "/usr/local/bin/entrypoint.sh"]
+    volumes:
+      - ./hooks:/app
+      - hooks_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev"
+    # volumes:
+    #   - ./docker/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    ports:
+      - "5000:5000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - backend-net
       - data-net
@@ -86,7 +160,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./docker/db/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
@@ -99,15 +172,23 @@ services:
     image: apache/kafka:3.7.0
     restart: unless-stopped
     environment:
-      KAFKA_ENABLE_KRAFT: yes
-      KAFKA_CFG_PROCESS_ROLES: broker,controller
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
       - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - data-net
 
@@ -115,18 +196,11 @@ services:
     image: apache/kafka:3.7.0
     depends_on:
       kafka:
-        condition: service_started
-    entrypoint: ["/bin/sh", "-c"]
+        condition: service_healthy
+    # entrypoint: ["/bin/sh", "-c"]
     restart: "no"
     command: >
       "
-      echo 'Waiting for Kafka...';
-
-      until kafka-topics.sh --list --bootstrap-server kafka:9092; do
-        echo 'Kafka not ready...';
-        sleep 2;
-      done;
-
       echo 'Creating topics...';
 
       kafka-topics.sh --create \
@@ -144,6 +218,11 @@ services:
 volumes:
   db_data:
   kafka_data:
+  frontend_node_modules:
+  primbackend_node_modules:
+  hooks_node_modules:
+  processor_node_modules:
+  worker_node_modules:
 
 networks:
   frontend-net:

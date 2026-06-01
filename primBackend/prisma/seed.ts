@@ -1,7 +1,7 @@
-import { prismaClient } from "../src/db";
+import { prisma } from "../src/db";
 
 async function main() {
-    await prismaClient.availableTriggers.createMany({
+    await prisma.availableTriggers.createMany({
         data:[{
             id:"webhook",
             name:"Webhook",
@@ -10,7 +10,7 @@ async function main() {
     ],
         skipDuplicates:true
     })
-    await prismaClient.availableActions.createMany({
+    await prisma.availableActions.createMany({
         data:[{
             id:"send-email",
             name:"Send Email",
@@ -19,7 +19,7 @@ async function main() {
     ],
         skipDuplicates:true
     })
-    await prismaClient.availableActions.createMany({
+    await prisma.availableActions.createMany({
         data:[{
             id:"send-solana",
             name:"Solana",
@@ -35,5 +35,5 @@ main()
         process.exit(1)
     })
     .finally(async () => {
-        await prismaClient.$disconnect()
+        await prisma.$disconnect()
     })

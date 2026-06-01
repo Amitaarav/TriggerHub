@@ -1,1 +1,23 @@
+# ─── Environment ──────────────────
 .env
+.env.*
+!.env.example
+
+# ─── Secrets (NEVER commit) ──────
+secrets/*.txt
+
+# ─── Dependencies ─────────────────
+node_modules/
+
+# ─── Build artifacts ──────────────
+dist/
+build/
+.next/
+
+# ─── IDE / OS ─────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store

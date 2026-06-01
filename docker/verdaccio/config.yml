@@ -1,0 +1,16 @@
+storage: /verdaccio/storage
+auth:
+  htpasswd:
+    file: /verdaccio/htpasswd
+    max_users: -1        # disable registration, anonymous read is enough
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+    timeout: 60s
+packages:
+  '**':
+    access: $anonymous
+    publish: $anonymous
+    proxy: npmjs         # fetch from npm.org on cache miss, store locally
+logs:
+  - { type: stdout, format: pretty, level: warn }

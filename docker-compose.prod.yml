@@ -1,18 +1,111 @@
+# ──────────────────────────────────────────────────────────
+# Production Override
+# ──────────────────────────────────────────────────────────
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Before first run, create secret files:
+#   mkdir -p secrets
+#   echo "your-strong-db-password"         > secrets/db_password.txt
+#   echo "your-32-char-jwt-secret"         > secrets/jwt_secret.txt
+#   echo "your-32-char-jwt-refresh-secret" > secrets/jwt_refresh_secret.txt
+#   echo "your-32-char-aadhar-salt"        > secrets/aadhar_salt.txt
+# ──────────────────────────────────────────────────────────
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  jwt_refresh_secret:
+    file: ./secrets/jwt_refresh_secret.txt
+  aadhar_salt:
+    file: ./secrets/aadhar_salt.txt
+
 services:
   frontend:
     ports:
       - "80:3000"
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   primbackend:
     ports:
       - "4000:4000"
+    secrets:
+      - db_password
+      - jwt_secret
+      - jwt_refresh_secret
+      - aadhar_salt
+    environment:
+      # Clear plain-text DATABASE_URL — entrypoint builds it from secrets
+      DATABASE_URL: ""
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   hooks:
     ports:
       - "5000:5000"
+    secrets:
+      - db_password
+    environment:
+      DATABASE_URL: ""
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  processor:
+    secrets:
+      - db_password
+    environment:
+      DATABASE_URL: ""
+    logging: *default-logging
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  worker:
+    secrets:
+      - db_password
+    environment:
+      DATABASE_URL: ""
+    logging: *default-logging
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   db:
-    # no ports exposed
+    # No ports exposed — internal only in production
+    secrets:
+      - db_password
+    environment:
+      # Postgres natively reads _FILE suffixed vars from secret files
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_PASSWORD: ""
+    logging: *default-logging
     deploy:
       resources:
         limits:
@@ -20,27 +113,13 @@ services:
           cpus: "0.5"
 
   kafka:
-    # no ports exposed
+    # No ports exposed — internal only in production
+    logging: *default-logging
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: "1"
 
-  processor:
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          memory: 512M
-
-  worker:
-    deploy:
-      replicas: 3
-      resources:
-        limits:
-          memory: 512M
-
-# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-# scale manually 
-# docker compose up --scale worker=3 --scale processor=2
+# Scale manually:
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale worker=5 --scale processor=3

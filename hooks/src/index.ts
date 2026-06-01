@@ -2,10 +2,12 @@ import express from "express";
 import { PrismaClient } from "@prisma/client";
 const app = express();
 
+const PORT = process.env.PORT || 5000;
 const client = new PrismaClient();
 
 app.use(express.json());
 
+// 
 app.post("/hooks/catch/:userId/:zapId",async(req,res)=>{
     const userId = req.params.userId;
     const zapId = req.params.zapId;
@@ -13,6 +15,7 @@ app.post("/hooks/catch/:userId/:zapId",async(req,res)=>{
     try {
         // store in the DB
         const response = await client.$transaction(async(tx)=>{
+            // 
             const run = await tx.zapRun.create({
                 data:{
                     zapId: zapId,
@@ -29,6 +32,7 @@ app.post("/hooks/catch/:userId/:zapId",async(req,res)=>{
                 zapRun:run
             }
         })
+        // returning when the 
         res.json({
             message: "Webhook created successfully",
             data: response,
@@ -49,6 +53,6 @@ app.post("/hooks/catch/:userId/:zapId",async(req,res)=>{
     }
 })
 
-app.listen(3002,()=>{
-    console.log("Server is running on http://localhost:3002")
+app.listen(PORT,()=>{
+    console.log(`Server is running on http://localhost:${PORT}`)
 })

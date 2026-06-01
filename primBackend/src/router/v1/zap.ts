@@ -1,7 +1,7 @@
 import { Router,Request, Response } from "express";
-import { authMiddleware, CustomRequest } from "../middleware/authMiddleware";
-import { zapCreateSchema } from "../types";
-import { prismaClient } from "../db";
+import { authMiddleware, CustomRequest } from "../../middleware/authMiddleware"
+import { zapCreateSchema } from "../../types/";
+import { prisma } from "../../db/index";
 
 const router = Router();
 
@@ -19,7 +19,7 @@ router.post("/", authMiddleware, async (req: Request, res: Response) => {
   }
 
   try {
-    const zapId = await prismaClient.$transaction(async (tx) => {
+    const zapId = await prisma.$transaction(async (tx) => {
       const zap = await tx.zap.create({
         data: {
           userId: Number(id),
@@ -61,7 +61,7 @@ router.get("/", authMiddleware, async (req: Request, res: Response) => {
   const id = (req as CustomRequest).id;
 
   try {
-    const zaps = await prismaClient.zap.findMany({
+    const zaps = await prisma.zap.findMany({
       where: { userId: Number(id) },
       include: {
         actions: { include: { type: true } },
@@ -82,7 +82,7 @@ router.get("/:zapId", authMiddleware, async (req:Request, res: Response) => {
   const zapId = req.params.zapId;
 
   try {
-    const zap = await prismaClient.zap.findFirst({
+    const zap = await prisma.zap.findFirst({
       where: {
         id: zapId,
         userId: Number(id),

@@ -4,19 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc -b",
     "dev": "tsc -b && node dist/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "prisma": "^6.2.1",
-    "typescript": "^5.8.3"
-  },
   "dependencies": {
-    "@prisma/client": "^6.2.1",
-    "@types/express": "^5.0.0",
+    "@prisma/client": "^6.8.2",
     "express": "^4.21.2",
     "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "prisma": "^6.8.2",
+    "typescript": "^5.8.3"
   }
 }

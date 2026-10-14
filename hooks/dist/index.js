@@ -15,8 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
 const app = (0, express_1.default)();
+const PORT = process.env.PORT || 5000;
 const client = new client_1.PrismaClient();
 app.use(express_1.default.json());
+// 
 app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.userId;
     const zapId = req.params.zapId;
@@ -24,6 +26,7 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
     try {
         // store in the DB
         const response = yield client.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            // 
             const run = yield tx.zapRun.create({
                 data: {
                     zapId: zapId,
@@ -39,6 +42,7 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
                 zapRun: run
             };
         }));
+        // returning when the 
         res.json({
             message: "Webhook created successfully",
             data: response,
@@ -60,6 +64,6 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
         }
     }
 }));
-app.listen(3002, () => {
-    console.log("Server is running on http://localhost:3002");
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

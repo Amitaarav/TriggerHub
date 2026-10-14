@@ -8,18 +8,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const kafkajs_1 = require("kafkajs");
 const client_1 = require("@prisma/client");
+const adapter_pg_1 = require("@prisma/adapter-pg");
 const parser_1 = require("./parser");
 const email_1 = require("./email");
 const solana_1 = require("./solana");
 const TOPIC_NAME = "zap-events";
 const kafka = new kafkajs_1.Kafka({
     clientId: 'zap-worker',
-    brokers: ['localhost:9092']
+    brokers: ((_a = process.env.KAFKA_BROKERS) !== null && _a !== void 0 ? _a : 'localhost:9094').split(',')
 });
-const prismaClient = new client_1.PrismaClient();
+const adapter = new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prismaClient = new client_1.PrismaClient({ adapter });
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         // create a consumer
@@ -29,7 +32,9 @@ function main() {
         // consumer subscribe to the topic
         yield consumer.subscribe({ topic: TOPIC_NAME, fromBeginning: true });
         // create a producer to send the next stage
-        const producer = kafka.producer();
+        const producer = kafka.producer({
+            createPartitioner: kafkajs_1.Partitioners.LegacyPartitioner
+        });
         // connect the producer to the broker
         yield producer.connect();
         yield consumer.run({

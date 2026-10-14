@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { twMerge } from "tailwind-merge";
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "sonner";
+
 export const metadata: Metadata = {
-  title: "TriggerHub",
-  description: "Automate your workflow in no code way",
+  title: "TriggerHub — Visual Automation Platform",
+  description: "Connect your apps and automate complex workflows effortlessly with TriggerHub.",
 };
 
 export default function RootLayout({
@@ -13,9 +15,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-      >
-        {children}
+      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-orange-500 selection:text-white">
+        <AuthProvider>
+          {children}
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            expand={false}
+            toastOptions={{
+              style: {
+                borderRadius: "0.75rem",
+              },
+            }}
+          />
+        </AuthProvider>
       </body>
     </html>
   );

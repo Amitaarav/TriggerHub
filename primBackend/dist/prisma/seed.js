@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("../src/db");
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db_1.prismaClient.availableTriggers.createMany({
+        yield db_1.prisma.availableTriggers.createMany({
             data: [{
                     id: "webhook",
                     name: "Webhook",
@@ -21,7 +21,7 @@ function main() {
             ],
             skipDuplicates: true
         });
-        yield db_1.prismaClient.availableActions.createMany({
+        yield db_1.prisma.availableActions.createMany({
             data: [{
                     id: "send-email",
                     name: "Send Email",
@@ -30,7 +30,7 @@ function main() {
             ],
             skipDuplicates: true
         });
-        yield db_1.prismaClient.availableActions.createMany({
+        yield db_1.prisma.availableActions.createMany({
             data: [{
                     id: "send-solana",
                     name: "Solana",
@@ -47,5 +47,5 @@ main()
     process.exit(1);
 })
     .finally(() => __awaiter(void 0, void 0, void 0, function* () {
-    yield db_1.prismaClient.$disconnect();
+    yield db_1.prisma.$disconnect();
 }));

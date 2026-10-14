@@ -1,246 +1,489 @@
-"use client"
-import { Appbar } from "@/components/Appbar"
-import { ZapCell } from "@/components/ZapCell"
-import { useState,useEffect } from "react"
-import { PrimaryButton } from "@/components/buttons/PrimaryButton"
-import { BACKEND_URL } from "@/app/config"
-import { useRouter } from "next/navigation"
-import { Input } from "@/components/Input"
-import Image from "next/image"
-import authAxios from "@/utils/authAxios"
+"use client";
 
-export default function zapCreate() {
-    const router = useRouter()
-    const { availableActions, availableTriggers } = useAvailableActionsAndTriggers()
-    const [selectedTrigger, setSelectedTrigger] = useState<{
-        id:string;
-        name:string;
-    }>()
-    const [selectedActions, setSelectedActions] = useState<{
-        index:number;
-        availableActionId:string;
-        availableActionName:string;
-        metadata:any;
-    }[]>([])
-    const [selectedModalIndex,setSelecedModalIndex] = useState<number | null>(null)
-    return <div>
-        <Appbar />
-        <div className="flex justify-end p-2">
-            <PrimaryButton onClick={
-                async() => {
-                    if(!selectedTrigger?.id) {
-                        return;
-                    }
-                    console.log("Sending request with token:");
-                    try {
-                        const response = await authAxios.post(`${BACKEND_URL}/api/v1/zap`, {
-                            "availableTriggerId": selectedTrigger.id,
-                            "triggerMetadata": {},
-                            "actions": selectedActions.map(a => ({
-                                availableActionId: a.availableActionId,
-                                actionMetadata: a.metadata
-                            }))
-                        })
-                        console.log("Response:", response.data);
-                        router.push("/dashboard");
-                    } catch (error: any) {
-                        console.error("Error creating zap:", error.response?.data || error.message);
-                        if (error.response?.status === 403) {
-                            console.error("Authentication failed. Please try logging in again.");
-                        }
-                    }
-                }
-            }>Publish</PrimaryButton>
-        </div>
-        <div className="w-full min-h-screen bg-slate-200 flex flex-col justify-center">
-            
-            <div className="flex justify-center w-full">
-                <ZapCell onClick={()=>{
-                    setSelecedModalIndex(1)
-                }} index={1}  name={selectedTrigger?.name? selectedTrigger.name : "Select a trigger"}  />
-            </div>
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ReactFlow,
+  ReactFlowProvider,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  Node,
+  Edge,
+  MarkerType,
+} from "@xyflow/react";
+import { Appbar } from "@/components/Appbar";
+import { TriggerNode } from "@/components/workflow/TriggerNode";
+import { ActionNode } from "@/components/workflow/ActionNode";
+import { AddNode } from "@/components/workflow/AddNode";
+import {
+  WorkflowConfigModal,
+  ConfigSelectionResult,
+} from "@/components/workflow/WorkflowConfigModal";
+import { PrimaryButton } from "@/components/buttons/PrimaryButton";
+import { BACKEND_URL } from "@/app/config";
+import authAxios from "@/utils/authAxios";
+import { useAuth } from "@/context/AuthContext";
+import { showError, showSuccess, showWarning, extractErrorMessage } from "@/lib/toast";
+import {
+  ArrowLeft,
+  Sparkles,
+  Plus,
+  Loader2,
+} from "lucide-react";
 
-            <div className="w-full pt-2 pb-2">
-                {selectedActions.map((action, index) => <div key={index} className="p-2 flex justify-center">
-                    <ZapCell onClick={()=>{
-                    setSelecedModalIndex(action.index)
-                }} index={action.index}  name={ action.availableActionName ? action.availableActionName : "Select an Action"} />
-                    </div>
-                )}
-            </div>
-
-            <div className="flex justify-center">
-                    <div className="">
-                        <PrimaryButton onClick={()=>{
-                        setSelectedActions( actions => [...actions, {index: actions.length + 2,availableActionId: "", availableActionName: "",metadata:{}}])
-                        }}><div className="text-2xl max-w-2 flex justify-center">+</div></PrimaryButton>
-                    </div>
-            </div>
-        </div>
-        {selectedModalIndex && <Modal availableItems={ selectedModalIndex === 1 ?availableTriggers : availableActions} onSelect={(
-            props: null | {name:string, id: string,metadata: string;}) =>{
-                if(props === null){
-                    setSelecedModalIndex(null)
-                    return ;
-                }
-                if(selectedModalIndex === 1){
-                    setSelectedTrigger({
-                        id: props.id,
-                        name: props.name
-                    })
-                }else{
-                    setSelectedActions( action => {
-                        const newActions = [...action];
-                        newActions[selectedModalIndex - 2] = {
-                            index: selectedModalIndex,
-                            availableActionId: props.id,
-                            availableActionName: props.name,
-                            metadata:props.metadata
-                        }
-                        return newActions;
-                    })
-                }
-                setSelecedModalIndex(null)
-            }
-        }index={selectedModalIndex}  />}
-    </div>
+interface ActionItem {
+  id: string; // unique local ID for React Flow
+  availableActionId: string;
+  name: string;
+  image?: string;
+  metadata: Record<string, unknown>;
 }
 
-function Modal({ index,onSelect,availableItems}:{index: number,onSelect: (props: null | {name:string, id: string,metadata:string;}) => void,availableItems: {name: string, id: string,image:string;}[]}) {
-    const [step,setStep] = useState(0);
-    const [selectedAction,setSelectedAction] = useState<{
-        id:string,
-        name:string
-    }>();
-    const isTrigger = index === 1;
+function WorkflowCanvasContent() {
+  const router = useRouter();
+  const { token, isLoading: authLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
-    return <div>
-        <div  className="  fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-slate-100 bg-opacity-70 flex mt-20">
-    <div className="relative p-4 w-full max-w-2xl max-h-full">
-        
-        <div className="relative bg-white rounded-lg shadow ">
+  // Mark mounted on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-            <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                <div className="text-lg font-semibold text-gray-900">
-                    Select { index === 1 ? "Trigger" : "Action" }
-                </div>
-                <button onClick={()=>{
-                    onSelect(null)
-                }} type="button" className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="default-modal">
-                    <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
-                    </svg>
-                    <span className="sr-only">Close modal</span>
-                </button>
-            </div>
-            <div className="p-4 md:p-5 space-y-4">
-            {step === 1 && selectedAction?.id === "send-email" && <EmailSelector setMetadata={(metadata)=>{
-                onSelect({
-                    ...selectedAction,
-                    metadata
-                })
-            }}/>}
-            { step === 1 && selectedAction?.id === "send-solana" && <SolanaSelector setMetadata={(metadata)=>{
-                onSelect({
-                    ...selectedAction,
-                    metadata
-                })
-            }}/>}
-            {( step === 0 && <div>
-                        {
-                            availableItems.map(({id,name,image})=>{
-                                return <div key={id} onClick={()=>{
-                                            if(isTrigger){
-                                                onSelect({
-                                                    id,
-                                                    name,
-                                                    metadata:""
-                                                })
-                                            }
-                                            else{
-                                                setStep(s => s+1);
-                                                setSelectedAction({
-                                                    id,
-                                                    name
-                                                })
-                                            }
-                                            
-                                            }} className="flex border p-2 cursor-pointer hover:bg-gray-100 pb-3">
-                                                
-                                                <Image alt="" className="rounded-full" src={image}  width={30} height={30} />
-                                                <div className="pr-2 font-semibold flex flex-col justify-center">{name}</div>
-                                            
-                                            </div>
-                                })
-                        }
-                        </div>)
-                }
-            </div>
-        </div>
-    </div>
-</div>
-    </div>
-
-}
-
-function useAvailableActionsAndTriggers(){
-    const [availableActions,setAvailebleActions] = useState([])
-    const [availableTriggers,setAvailableTriggers] = useState([])
-
-    useEffect(()=>{
-        authAxios.get(`${BACKEND_URL}/api/v1/trigger/available`)
-        .then(res=>{
-            setAvailableTriggers(res.data.availableTriggers)
-        })
-
-        authAxios.get(`${BACKEND_URL}/api/v1/action/available`)
-        .then(res=>{
-            setAvailebleActions(res.data.availableActions)
-        })
-        
-    },[])
-
-    return {
-        availableActions,
-        availableTriggers
+  // Protect route gracefully without false redirects
+  useEffect(() => {
+    if (!authLoading && mounted) {
+      const storedToken =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token && !storedToken) {
+        router.push("/login?redirect=/zap/create");
+      }
     }
+  }, [authLoading, token, mounted, router]);
+
+  // Available catalogs from API
+  const [availableTriggers, setAvailableTriggers] = useState<
+    { id: string; name: string; image: string }[]
+  >([]);
+  const [availableActions, setAvailableActions] = useState<
+    { id: string; name: string; image: string }[]
+  >([]);
+
+  // Workflow builder state
+  const [selectedTrigger, setSelectedTrigger] = useState<{
+    id: string;
+    name: string;
+    image?: string;
+  } | null>(null);
+
+  const [actions, setActions] = useState<ActionItem[]>([]);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  // Modal configuration state
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    isTrigger: boolean;
+    stepNumber: number;
+    actionLocalId?: string;
+  }>({
+    isOpen: false,
+    isTrigger: true,
+    stepNumber: 1,
+  });
+
+  // Fetch available triggers and actions
+  useEffect(() => {
+    const activeToken =
+      token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
+    if (!activeToken) return;
+
+    authAxios
+      .get(`${BACKEND_URL}/api/v1/trigger/available`)
+      .then((res) => {
+        if (res.data?.availableTriggers) {
+          setAvailableTriggers(res.data.availableTriggers);
+        }
+      })
+      .catch((err) => {
+        // Silently log or notify without crashing canvas
+        console.error("Could not fetch triggers", err);
+      });
+
+    authAxios
+      .get(`${BACKEND_URL}/api/v1/action/available`)
+      .then((res) => {
+        if (res.data?.availableActions) {
+          setAvailableActions(res.data.availableActions);
+        }
+      })
+      .catch((err) => {
+        console.error("Could not fetch actions", err);
+      });
+  }, [token]);
+
+  // Node types registration
+  const nodeTypes = useMemo(
+    () => ({
+      triggerNode: TriggerNode,
+      actionNode: ActionNode,
+      addNode: AddNode,
+    }),
+    []
+  );
+
+  // Handlers for modal
+  const openTriggerConfig = useCallback(() => {
+    setModalConfig({
+      isOpen: true,
+      isTrigger: true,
+      stepNumber: 1,
+    });
+  }, []);
+
+  const openActionConfig = useCallback(
+    (actionLocalId: string, stepIndex: number) => {
+      setModalConfig({
+        isOpen: true,
+        isTrigger: false,
+        stepNumber: stepIndex,
+        actionLocalId,
+      });
+    },
+    []
+  );
+
+  const handleAddNewAction = useCallback(() => {
+    const newId = `action-${Date.now()}`;
+    const newAction: ActionItem = {
+      id: newId,
+      availableActionId: "",
+      name: "",
+      metadata: {},
+    };
+    setActions((prev) => [...prev, newAction]);
+    setModalConfig({
+      isOpen: true,
+      isTrigger: false,
+      stepNumber: actions.length + 2,
+      actionLocalId: newId,
+    });
+  }, [actions.length]);
+
+  const handleDeleteAction = useCallback((actionLocalId: string) => {
+    setActions((prev) => prev.filter((a) => a.id !== actionLocalId));
+  }, []);
+
+  // Construct React Flow Nodes and Edges dynamically
+  const initialNodes: Node[] = useMemo(() => {
+    const flowNodes: Node[] = [];
+    const centerX = 260;
+    const spacingY = 170;
+
+    // 1. Trigger Node
+    flowNodes.push({
+      id: "node-trigger",
+      type: "triggerNode",
+      position: { x: centerX, y: 40 },
+      data: {
+        id: selectedTrigger?.id,
+        name: selectedTrigger?.name,
+        image: selectedTrigger?.image,
+        isConfigured: !!selectedTrigger?.id,
+        onConfigure: openTriggerConfig,
+      },
+    });
+
+    // 2. Action Nodes
+    actions.forEach((act, index) => {
+      flowNodes.push({
+        id: act.id,
+        type: "actionNode",
+        position: { x: centerX, y: 40 + (index + 1) * spacingY },
+        data: {
+          index: index + 2,
+          availableActionId: act.availableActionId,
+          name: act.name,
+          image: act.image,
+          metadata: act.metadata,
+          isConfigured: !!act.availableActionId,
+          onConfigure: () => openActionConfig(act.id, index + 2),
+          onDelete: () => handleDeleteAction(act.id),
+        },
+      });
+    });
+
+    // 3. Add Node at the bottom
+    flowNodes.push({
+      id: "node-add-step",
+      type: "addNode",
+      position: { x: centerX + 55, y: 40 + (actions.length + 1) * spacingY },
+      data: {
+        onAdd: handleAddNewAction,
+      },
+    });
+
+    return flowNodes;
+  }, [
+    selectedTrigger,
+    actions,
+    openTriggerConfig,
+    openActionConfig,
+    handleDeleteAction,
+    handleAddNewAction,
+  ]);
+
+  const initialEdges: Edge[] = useMemo(() => {
+    const flowEdges: Edge[] = [];
+    let prevNodeId = "node-trigger";
+
+    actions.forEach((act) => {
+      flowEdges.push({
+        id: `edge-${prevNodeId}-${act.id}`,
+        source: prevNodeId,
+        target: act.id,
+        animated: true,
+        style: { stroke: "#f97316", strokeWidth: 2.5 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "#f97316",
+        },
+      });
+      prevNodeId = act.id;
+    });
+
+    // Edge to add node
+    flowEdges.push({
+      id: `edge-${prevNodeId}-add`,
+      source: prevNodeId,
+      target: "node-add-step",
+      style: { stroke: "#cbd5e1", strokeWidth: 2, strokeDasharray: "5,5" },
+    });
+
+    return flowEdges;
+  }, [actions]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Keep nodes in sync when actions/trigger state updates
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
+
+  // Handle configuration selection from Modal
+  const handleModalSelect = (result: ConfigSelectionResult) => {
+    if (modalConfig.isTrigger) {
+      setSelectedTrigger({
+        id: result.id,
+        name: result.name,
+        image: result.image,
+      });
+      showSuccess("Trigger configured", `Selected "${result.name}"`);
+    } else if (modalConfig.actionLocalId) {
+      setActions((prev) =>
+        prev.map((a) => {
+          if (a.id === modalConfig.actionLocalId) {
+            return {
+              ...a,
+              availableActionId: result.id,
+              name: result.name,
+              image: result.image,
+              metadata: result.metadata || {},
+            };
+          }
+          return a;
+        })
+      );
+      showSuccess("Action configured", `Configured "${result.name}"`);
+    }
+  };
+
+  // Publish workflow to backend
+  const handlePublishZap = async () => {
+    if (!selectedTrigger?.id) {
+      showWarning(
+        "Trigger required",
+        "Please select a trigger event before publishing."
+      );
+      return;
+    }
+
+    if (actions.length === 0) {
+      showWarning(
+        "Action required",
+        "Add at least one action step to complete the workflow."
+      );
+      return;
+    }
+
+    const unconfigured = actions.some((a) => !a.availableActionId);
+    if (unconfigured) {
+      showWarning(
+        "Incomplete action steps",
+        "Please configure all action steps or remove incomplete ones."
+      );
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const payload = {
+        availableTriggerId: selectedTrigger.id,
+        triggerMetadata: {},
+        actions: actions.map((a) => ({
+          availableActionId: a.availableActionId,
+          actionMetadata: a.metadata || {},
+        })),
+      };
+
+      await authAxios.post(`${BACKEND_URL}/api/v1/zap`, payload);
+
+      showSuccess(
+        "Workflow published!",
+        "Your automation is now live and waiting for webhook events."
+      );
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const errorMsg = extractErrorMessage(
+        err,
+        "Failed to create workflow. Please check your network and try again."
+      );
+      showError("Publish failed", errorMsg);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const activeAction = actions.find((a) => a.id === modalConfig.actionLocalId);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100">
+        <Appbar />
+        <div className="mt-16 flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+            <p className="text-sm font-semibold text-slate-600">
+              Loading Workflow Builder...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100">
+      <Appbar />
+
+      {/* Editor Sub-Header / Control Bar */}
+      <div className="mt-16 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3 shadow-xs z-10">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Dashboard</span>
+          </button>
+
+          <div className="h-4 w-px bg-slate-200" />
+
+          <div>
+            <h1 className="text-base font-bold text-slate-900 leading-tight">
+              Untitled Automation
+            </h1>
+            <p className="text-xs text-slate-500">
+              {selectedTrigger?.id ? "Draft workflow" : "Configure trigger to start"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleAddNewAction}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Step</span>
+          </button>
+
+          <PrimaryButton
+            size="small"
+            isLoading={isPublishing}
+            onClick={handlePublishZap}
+            className="gap-2 px-5 py-2 text-xs"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>{isPublishing ? "Publishing..." : "Publish Workflow"}</span>
+          </PrimaryButton>
+        </div>
+      </div>
+
+      {/* React Flow Visual Canvas */}
+      <div className="flex-1 w-full h-[calc(100vh-120px)] relative">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.3 }}
+          minZoom={0.4}
+          maxZoom={1.5}
+          proOptions={{ hideAttribution: true }}
+          className="bg-slate-50/50"
+        >
+          <Background color="#cbd5e1" gap={20} size={1.2} />
+          <Controls
+            position="bottom-left"
+            showInteractive={false}
+            className="bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden"
+          />
+          <MiniMap
+            position="bottom-right"
+            nodeColor={(n) => (n.type === "triggerNode" ? "#ea580c" : "#1e293b")}
+            className="border border-slate-200 rounded-xl overflow-hidden shadow-md bg-white/90"
+          />
+        </ReactFlow>
+
+        {/* Empty Canvas Prompt Overlay if no trigger */}
+        {!selectedTrigger && (
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 pointer-events-none">
+            <div className="inline-flex items-center gap-2 rounded-full bg-orange-600/90 text-white px-4 py-2 text-xs font-semibold shadow-lg backdrop-blur-sm pointer-events-auto">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Click the Trigger card below to begin your automation</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Configuration Modal */}
+      <WorkflowConfigModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
+        onSelect={handleModalSelect}
+        isTrigger={modalConfig.isTrigger}
+        stepNumber={modalConfig.stepNumber}
+        availableItems={modalConfig.isTrigger ? availableTriggers : availableActions}
+        initialActionId={activeAction?.availableActionId}
+        initialMetadata={activeAction?.metadata}
+      />
+    </div>
+  );
 }
 
-function EmailSelector({setMetadata}:{
-    setMetadata:(params:any)=>void
-}){
-    const [email,setEmail] = useState("")
-    const [body,setBody] = useState("")
-
-    return <div>
-        <Input label={"To"} type={"text"} placeholder="To" onChange={(event => setEmail(event.target.value))}></Input>
-        <Input label={"Body"} type={"text"} placeholder="Body" onChange={(event => setBody(event.target.value))}></Input>
-        <div className="p-4">
-        <PrimaryButton onClick={()=>{
-            setMetadata({
-                email,
-                body
-            })
-        }}>Submit</PrimaryButton>
-        </div>
-    </div>
-}
-
-function SolanaSelector({setMetadata}:{
-    setMetadata:(params:any)=>void
-}){
-    const [address,setAddress] = useState("")
-    const [amount,setAmount] = useState("")
-    return <div className="gap-4">
-        <Input label={"To"} type={"text"} placeholder="To" onChange={(event => setAddress(event.target.value))}></Input>
-        <Input label={"Amount"} type={"text"} placeholder="Body" onChange={(event => setAmount(event.target.value))}></Input>
-        <div className="p-4">
-        <PrimaryButton  onClick={()=>{
-            setMetadata({
-                amount,
-                address
-            })
-        }}>Submit</PrimaryButton>
-        </div>
-    </div>
+export default function CreateZapPage() {
+  return (
+    <ReactFlowProvider>
+      <WorkflowCanvasContent />
+    </ReactFlowProvider>
+  );
 }

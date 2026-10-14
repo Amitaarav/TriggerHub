@@ -1,29 +1,38 @@
-import { ReactNode } from "react"
+"use client";
 
-export const PrimaryButton = ({ children,onClick,size="small" }: { 
-        children: ReactNode,
-        onClick:()=>void,
-        size?:"big" | "small"
-    }) => {
-        return (
-                <div
-                onClick={onClick}
-                className={`${size === "small" ? "text-sm px-8 py-2" : "text-xl px-10 py-4"} 
-                    cursor-pointer 
-                    hover:shadow-xl 
-                    bg-orange-500 
-                    text-white 
-                    rounded-full 
-                    text-center 
-                    flex justify-center items-center
-                    font-bold 
-                    hover:bg-orange-700 
-                    group relative overflow-hidden 
-                    `
-                }
-                >
-                <span className="relative z-10 group-hover:text-shine">{children}</span>
-                {/* <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white to-white/10 opacity-0 group-hover:opacity-30 blur-sm animate-shimmer" /> */}
-                </div>
-            );   
+import { ReactNode } from "react";
+import { Loader2 } from "lucide-react";
+
+interface PrimaryButtonProps {
+  children: ReactNode;
+  onClick?: () => void;
+  size?: "big" | "small";
+  disabled?: boolean;
+  isLoading?: boolean;
+  type?: "button" | "submit" | "reset";
+  className?: string;
 }
+
+export const PrimaryButton = ({
+  children,
+  onClick,
+  size = "small",
+  disabled = false,
+  isLoading = false,
+  type = "button",
+  className = "",
+}: PrimaryButtonProps) => {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      className={`inline-flex items-center justify-center font-bold rounded-full transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none ${
+        size === "small" ? "text-sm px-6 py-2.5" : "text-base px-8 py-3.5"
+      } ${className}`}
+    >
+      {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+      <span>{children}</span>
+    </button>
+  );
+};

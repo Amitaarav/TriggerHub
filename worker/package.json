@@ -20,6 +20,9 @@
     "nodemailer": "^7.0.3"
   },
   "devDependencies": {
+    "@prisma/adapter-pg": "6.8.2",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.16.3",
     "prisma": "^6.8.2",
     "typescript": "^5.8.3"
   }

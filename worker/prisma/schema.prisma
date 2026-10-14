@@ -5,12 +5,20 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum ActionExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
 }
 
 model User{
@@ -57,6 +65,7 @@ model AvailableActions{
   actions Action[]
   image  String
 }
+
 model AvailableTriggers{
   id String @id @default(uuid())
   name String
@@ -78,4 +87,20 @@ model ZapRunOutbox {
   zapRun   ZapRun @relation(fields: [zapRunId], references: [id])
   processed Boolean @default(false)
   createdAt DateTime @default(now())
+}
+
+model ActionExecution{
+  id      String @id @default(uuid())
+  zapRunId   String 
+  stage       Int 
+
+  status    ActionExecutionStatus @default(PENDING)
+  attempts    Int  @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lockedAt    DateTime? // leases
+
+  @@unique([zapRunId, stage]) // for a given workflow run, a given action should execute once.
 }

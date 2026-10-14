@@ -1,6 +1,7 @@
 
-import { Kafka } from 'kafkajs';
-import  { PrismaClient } from '@prisma/client';
+import { Kafka, Partitioners } from 'kafkajs';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from "@prisma/adapter-pg";
 import { JsonObject } from '@prisma/client/runtime/library';
 import { parse } from './parser';
 import { sendEmail } from './email';
@@ -10,10 +11,11 @@ const TOPIC_NAME = "zap-events"
 
 const kafka = new Kafka({
     clientId: 'zap-worker',
-    brokers: ['localhost:9092']
+    brokers: (process.env.KAFKA_BROKERS ?? 'localhost:9094').split(',')
 });
 
-const prismaClient = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prismaClient = new PrismaClient({ adapter });
 
 async function main(){
 
@@ -26,7 +28,9 @@ async function main(){
     await consumer.subscribe({topic: TOPIC_NAME, fromBeginning: true});
 
     // create a producer to send the next stage
-    const producer = kafka.producer();
+    const producer = kafka.producer({
+        createPartitioner: Partitioners.LegacyPartitioner
+    });
 
     // connect the producer to the broker
     await producer.connect();

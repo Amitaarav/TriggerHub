@@ -30,7 +30,7 @@ secrets:
 
 services:
   frontend:
-    ports:
+    ports: !override
       - "80:3000"
     logging: *default-logging
     deploy:
@@ -41,7 +41,7 @@ services:
 
   primbackend:
     ports:
-      - "4000:4000"
+      - "3000:3000"
     secrets:
       - db_password
       - jwt_secret

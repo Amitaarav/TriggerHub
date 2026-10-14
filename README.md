@@ -181,6 +181,21 @@ cd ../processor && npm install
 cd ../worker && npm install
 ```
 
+### Generate Random Secrets
+```bash
+node scripts/generate-secrets.js
+```
+
+### Migrate
+```bash
+npx prisma migrate dev
+```
+
+### copy existing migration
+```bash
+Copy-Item -Path "primBackend\prisma\migrations" -Destination "prisma\migrations" -Recurse -Force
+```
+
 ### 3. Configuration
 Create a `.env` file in each service directory (or a root one if using a monorepo manager):
 ```env
@@ -189,18 +204,25 @@ KAFKA_BROKERS=localhost:9092
 JWT_PASSWORD=your_secret_password
 ```
 
-### 4. Running the Application
-```bash
-# Start Infrastructure (Kafka, Postgres)
-docker-compose up -d
+### 4. Running the Application locally with Docker
 
-# Start Services (in separate terminals)
-npm run dev --prefix frontend
-npm run dev --prefix primbackend
-npm run dev --prefix hooks
-npm run dev --prefix processor
-npm run dev --prefix worker
+You can easily spin up the entire infrastructure and all services for local development with a single command. Hot-reloading is supported and dependencies are managed within isolated container environments.
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
 ```
+
+*(Alternatively, you can run services manually in separate terminals using `npm run dev --prefix <service>` after starting only the infrastructure `db` and `kafka` services).*
+
+---
+
+## 🚀 CI/CD Pipeline
+
+TriggerHub is equipped with a GitHub Actions workflow to automate continuous integration and containerization.
+
+- **Automated Builds:** On every push to the `main` branch, Docker images for all microservices are built concurrently.
+- **Image Registry:** Built images are securely pushed to the **GitHub Container Registry (GHCR)** and tagged with the commit SHA. 
+*(Note: Future production implementations will be migrated to target Amazon ECR).*
 
 ---
 

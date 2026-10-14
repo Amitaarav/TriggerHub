@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { Kafka } from "kafkajs";
+import { Kafka, Partitioners } from "kafkajs";
 
 const client = new PrismaClient();
 const TOPIC_NAME = "zap-events";
@@ -7,11 +7,13 @@ const TOPIC_NAME = "zap-events";
 // Kafka broker configuration
 const kafka = new Kafka({
     clientId: 'outbox-processor',
-    brokers: ['localhost:9092'] // Use environment variable in production
+    brokers: (process.env.KAFKA_BROKERS ?? 'localhost:9094').split(',')
 });
 
 async function main() {
-    const producer = kafka.producer();
+    const producer = kafka.producer({
+        createPartitioner: Partitioners.LegacyPartitioner
+    });
     await producer.connect();
 
     console.log("Kafka Producer connected. Starting Outbox Poller...");

@@ -1,0 +1,6 @@
+2026-10-13 07:28:48.055 [34mdebug[39m: Query: INSERT INTO "public"."AvailableTriggers" ("id","name","image") VALUES ($1,$2,$3) ON CONFLICT DO NOTHING - Duration: 124ms
+2026-10-13 07:28:48.079 [34mdebug[39m: Query: COMMIT - Duration: 24ms
+2026-10-13 07:28:48.111 [34mdebug[39m: Query: INSERT INTO "public"."AvailableActions" ("id","name","image") VALUES ($1,$2,$3) ON CONFLICT DO NOTHING - Duration: 20ms
+2026-10-13 07:28:48.120 [34mdebug[39m: Query: COMMIT - Duration: 8ms
+2026-10-13 07:28:48.137 [34mdebug[39m: Query: INSERT INTO "public"."AvailableActions" ("id","name","image") VALUES ($1,$2,$3) ON CONFLICT DO NOTHING - Duration: 10ms
+2026-10-13 07:28:48.146 [34mdebug[39m: Query: COMMIT - Duration: 8ms

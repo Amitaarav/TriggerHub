@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { SignupSchema,SigninSchema } from "../../types";
+import { SignupSchema, SigninSchema } from "../../types";
 import { prisma } from "../../db";
-import { authMiddleware } from "../../middleware/authMiddleware";
+import { AuthenticatedRequest, authMiddleware } from "../../middleware/authMiddleware";
 import jwt from "jsonwebtoken";
 import { configEnv } from "../../config/env-config"
 import bcrypt from "bcrypt"
@@ -73,18 +73,36 @@ router.post("/signin",async(req,res)=>{
         configEnv.jwtSecret as string,
         { expiresIn: "1h" }
     );
+
+    console.log("Token: ", token);
     //
     res.status(200).json({ token, userExists });
 })
 
-router.get("/",authMiddleware,async(req,res)=>{
-    //@ts-ignore
-    const id = req.id;
-    const user = await prisma.user.findFirst({
-        where:{
-            id:id
-        }
-    })
-    res.status(200).json({user})
-})
+router.get("/", (req, res, next) => {
+  console.log("[USER ROUTE] GET / reached");
+  next();
+}, authMiddleware, async (req, res) => {
+  console.log("[USER ROUTE] Authentication passed");
+
+  const id = (req as AuthenticatedRequest).id;
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: Number(id),
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+    return;
+  }
+
+  res.status(200).json({ user });
+});
 export const userRouter = router;

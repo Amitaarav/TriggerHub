@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const kafkajs_1 = require("kafkajs");
@@ -16,11 +17,13 @@ const TOPIC_NAME = "zap-events";
 // Kafka broker configuration
 const kafka = new kafkajs_1.Kafka({
     clientId: 'outbox-processor',
-    brokers: ['localhost:9092'] // Use environment variable in production
+    brokers: ((_a = process.env.KAFKA_BROKERS) !== null && _a !== void 0 ? _a : 'localhost:9094').split(',')
 });
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const producer = kafka.producer();
+        const producer = kafka.producer({
+            createPartitioner: kafkajs_1.Partitioners.LegacyPartitioner
+        });
         yield producer.connect();
         console.log("Kafka Producer connected. Starting Outbox Poller...");
         while (true) {
@@ -44,7 +47,7 @@ function main() {
                     topic: TOPIC_NAME,
                     messages: pendingRows.map(r => ({
                         // Use the Outbox ID as the key for partitioning/ordering (optional but recommended)
-                        key: r.id.toString(),
+                        key: r.zapRunId.toString(), // kafka decide partition strategy using: hash(key) % number_of_partitions
                         // Send minimal, necessary data
                         value: JSON.stringify({ zapRunId: r.zapRunId, outboxId: r.id, stage: 0 })
                     }))

@@ -1,5 +1,5 @@
 import { Router,Request, Response } from "express";
-import { authMiddleware, CustomRequest } from "../../middleware/authMiddleware"
+import { authMiddleware, AuthenticatedRequest} from "../../middleware/authMiddleware"
 import { zapCreateSchema } from "../../types/";
 import { prisma } from "../../db/index";
 
@@ -7,7 +7,7 @@ const router = Router();
 
 router.post("/", authMiddleware, async (req: Request, res: Response) => {
   
-  const id = (req as CustomRequest).id;
+  const id = (req as AuthenticatedRequest).id;
   const body = req.body;
 
   const parsedData = zapCreateSchema.safeParse(body);
@@ -58,7 +58,7 @@ router.post("/", authMiddleware, async (req: Request, res: Response) => {
 });
 
 router.get("/", authMiddleware, async (req: Request, res: Response) => {
-  const id = (req as CustomRequest).id;
+  const id = (req as AuthenticatedRequest).id;
 
   try {
     const zaps = await prisma.zap.findMany({
@@ -78,7 +78,7 @@ router.get("/", authMiddleware, async (req: Request, res: Response) => {
 
 // GET /zap/:zapId - Get single zap for authenticated user
 router.get("/:zapId", authMiddleware, async (req:Request, res: Response) => {
-  const id = (req as CustomRequest).id;
+  const id = (req as AuthenticatedRequest).id;
   const zapId = req.params.zapId;
 
   try {

@@ -1,69 +1,213 @@
 services:
-  npm-cache:
-    image: verdaccio/verdaccio:5
-    ports:
-      - "4873:4873"          # exposed to host so BuildKit can reach it
-    volumes:
-      - npm_cache:/verdaccio/storage
-      - ./docker/verdaccio/config.yaml:/verdaccio/conf/config.yaml:ro
-    # no networks needed — BuildKit reaches it via the host port, not compose network
-
   frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.fe
+    restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
       - /app/.next
+    env_file: .env
     environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_HOOKS_URL: http://localhost:5003
       NODE_ENV: development
+    command: sh -c "npm install --legacy-peer-deps && npm run dev"
+    depends_on:
+      primbackend:
+        condition: service_healthy
+    networks:
+      - frontend-net
+      - backend-net
 
   primbackend:
-    ports:
-      - "4000:4000"
+    ports: 
+      - "3000:3000"
+    build:
+      context: ./primBackend
+      dockerfile: ../docker/Dockerfile.backend
+    restart: unless-stopped
     volumes:
       - ./primBackend:/app
-      - /app/node_modules
+      - primbackend_node_modules:/app/node_modules
+    env_file: .env
+    command: sh -c "npm install && npx prisma generate && npx tsx watch src/index.ts"
     environment:
+      PORT: 3000
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-triggerhub}
       NODE_ENV: development
-    command: ["npx", "tsx", "watch", "src/index.ts"]   # hot reload
-
-  hooks:
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./hooks:/app
-      - /app/node_modules
-    environment:
-      NODE_ENV: development
-    command: ["npx", "tsx", "watch", "src/index.ts"]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend-net
+      - data-net
 
   processor:
+    build:
+      context: ./processor
+      dockerfile: ../docker/Dockerfile.backend
+    restart: unless-stopped
     volumes:
       - ./processor:/app
-      - /app/node_modules
+      - processor_node_modules:/app/node_modules
+    env_file: .env
+    command: sh -c "npm install && npx prisma generate && npx tsx watch src/index.ts"
     environment:
+      KAFKA_BROKERS: kafka:9092
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-triggerhub}
       NODE_ENV: development
-    command: ["npx", "tsx", "watch", "src/index.ts"]
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - data-net
 
   worker:
+    build:
+      context: ./worker
+      dockerfile: ../docker/Dockerfile.backend
+    restart: unless-stopped
     volumes:
       - ./worker:/app
-      - /app/node_modules
+      - worker_node_modules:/app/node_modules
+    env_file: .env
+    command: sh -c "npm install && npx prisma generate && npx tsx watch src/index.ts"
     environment:
+      KAFKA_BROKERS: kafka:9092
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-triggerhub}
       NODE_ENV: development
-    command: ["npx", "tsx", "watch", "src/index.ts"]
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - data-net
+
+  hooks:
+    build:
+      context: ./hooks
+      dockerfile: ../docker/Dockerfile.backend
+    restart: unless-stopped
+    volumes:
+      - ./hooks:/app
+      - hooks_node_modules:/app/node_modules
+    env_file: .env
+    command: sh -c "npm install && npx prisma generate && npx tsx watch src/index.ts"
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-triggerhub}
+      NODE_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend-net
+      - data-net
 
   db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-triggerhub}
+    volumes:
+      - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data-net
 
   kafka:
+    image: apache/kafka:3.7.0
+    restart: unless-stopped
     ports:
       - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server 127.0.0.1:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    networks:
+      - data-net
+
+  kafka-init:
+    image: apache/kafka:3.7.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+    command: >
+      bash -c "echo 'Creating topic...'; /opt/kafka/bin/kafka-topics.sh --create --topic zap-events --partitions 3 --replication-factor 1 --if-not-exists --bootstrap-server kafka:9092 && echo 'Topic created'"
+    networks:
+      - data-net
 
 volumes:
-  npm_cache:
-      
-# Usage:
-# docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+  db_data:
+  kafka_data:
+  frontend_node_modules:
+  primbackend_node_modules:
+  hooks_node_modules:
+  processor_node_modules:
+  worker_node_modules:
+
+networks:
+  frontend-net:
+  backend-net:
+  data-net:
